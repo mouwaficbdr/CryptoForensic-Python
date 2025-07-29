@@ -35,6 +35,72 @@ Le projet est structuré autour d'une architecture modulaire, respectant les pri
 
 -----
 
+## 🚀 Installation
+
+Suivez ces étapes pour configurer votre environnement de développement.
+
+### 1. Clônage du Dépôt
+
+```bash
+git clone https://github.com/mouwaficbdr/CryptoForensic-Python.git
+cd CryptoForensic-Python
+```
+
+### 2. Création et Activation de l'Environnement Virtuel
+
+Il est recommandé d'utiliser un environnement virtuel pour isoler les dépendances du projet.
+
+* **Sur Linux/macOS :**
+
+  ```bash
+  python3 -m venv .venv
+  source .venv/bin/activate
+  ```
+
+* **Sur Windows :**
+
+  ```bash
+  python -m venv .venv
+  .venv\Scripts\activate
+  ```
+
+### 3. Installation des Dépendances
+
+Une fois l'environnement virtuel activé, installez les bibliothèques nécessaires à l'aide du fichier `requirements.txt` :
+
+```bash
+pip install -r requirements.txt
+```
+
+-----
+
+## 📂 Arborescence du Projet
+
+```
+/home/mouwaficbdr/Bureau/CryptoForensic-Python/
+├───main.py                             # Point d'entrée avec interface CLI
+├───README.md
+├───data/                               # Fichiers chiffrés pour les tests
+├───docs/                               # Documentation du projet
+├───keys/                               # Dictionnaires de mots de passe
+├───src/                                # Code source de l'application
+│   ├───crypto_analyzer.py              # Interface pour les analyseurs
+│   ├───detecteur_crypto.py             # Moteur de détection
+│   ├───interface_console.py            # Interface en ligne de commande
+│   ├───rapport_mission.py              # Générateur de rapports
+│   ├───utils.py                        # Fonctions utilitaires
+│   └───analyzers/                      # Modules d'analyse par algorithme
+│       ├───aes_cbc_analyzer.py
+│       ├───aes_gcm_analyzer.py
+│       ├───blowfish_analyzer.py
+│       ├───chacha20_analyzer.py
+│       └───fernet_analyzer.py
+└───tests/                              # Scripts de test
+    ├───test_analyzers.py
+    ├───test_detecteur.py
+    └───test_integration.py
+```
+
 ## 🤝 Contributeurs
 
 * [**AIHOUNHIN Eunock**](https://github.com/Eunock-web)

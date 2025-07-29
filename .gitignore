@@ -1,0 +1,33 @@
+# Fichiers de cache et bytecode Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environnement virtuel
+.venv/
+venv/
+env/
+
+# Artefacts de build
+build/
+dist/
+*.egg-info/
+
+# Configuration des IDEs
+.vscode/
+.idea/
+
+# Fichiers générés par le système d'exploitation
+.DS_Store
+Thumbs.db
+
+# Données sensibles
+# Le dossier keys/ est ignoré pour éviter de versionner des clés ou des dictionnaires sensibles.
+# Si vos dictionnaires sont publics et nécessaires au projet, commentez ou retirez la ligne ci-dessous.
+keys/
+
+# Artefacts de test
+.pytest_cache/
+.coverage
+htmlcov/
