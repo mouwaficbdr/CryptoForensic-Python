@@ -33,9 +33,17 @@ Le projet est structuré autour d'une architecture modulaire, respectant les pri
       * `base64` : Pour les encodages de données.
   * **Conception :** Utilisation d'une **interface abstraite `CryptoAnalyzer`** pour définir un contrat clair pour chaque algorithme, orchestrée par la classe principale **`DetecteurCrypto`**.
 
-
-## 🛣️ Perspectives Futures
-
-Ce projet est une base solide pour explorer des fonctionnalités plus avancées, telles que la cryptanalyse fréquentielle, l'intégration d'algorithmes asymétriques, ou l'ajout de visualisations graphiques.
-
 -----
+
+## 🤝 Contributeurs
+
+* [**AIHOUNHIN Eunock**](https://github.com/Eunock-web)
+* [**ATOHOUN Andy**](https://github.com/e-mandy)
+* [**BADAROU Mouwafic**](https://github.com/mouwaficbdr)
+* [**OGOUDEDJI Seathiel**](https://github.com/seathiel-12)
+* [**OKWUDIAFOR Wesley**](https://github.com/wesley-kami)
+
+## 💡 Contribution
+
+Ce projet est ouvert aux contributions. Pour toute idée d'amélioration, rapport de bug ou optimisation, veuillez ouvrir une *issue* ou soumettre une *pull request*.
+
