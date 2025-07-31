@@ -3,8 +3,7 @@ import math
 def valider_texte_dechiffre(texte):
     pass
 
-def calculer_entropie_shannon(data):
-   bytes = bytes(data)
+def calculer_entropie(bytes):
    entropie = 0
    proba_byte = 0
    for specifique_byte in bytes:
