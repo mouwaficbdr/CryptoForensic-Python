@@ -1,14 +1,14 @@
-from abc import ABC
-class Crypto_analyzers(ABC):
-    @abs
-    def identifier_algo(self, fichier):
+from abc import ABC, abstractmethod
+
+class CryptoAnalyzer(ABC):
+    @abstractmethod
+    def identifier_algo(self, chemin_fichier_chiffre: str) -> float:
         pass
     
-    @abs
-    def dechiffrer(self, fichier, cle):
+    @abstractmethod
+    def dechiffrer(self, chemin_fichier_chiffre: str, cle_donnee: bytes) -> bytes:
         pass
     
-    @abs
-    def generer_cles_candidates(self, algo):
+    @abstractmethod
+    def generer_cles_candidates(self, chemin_dictionnaire: str) -> 'list[bytes]': 
         pass
-        
