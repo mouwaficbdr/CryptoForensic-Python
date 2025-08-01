@@ -1,0 +1,14 @@
+name: CI Minimal
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  dummy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Dummy check
+        run: echo "✅ OK" 
