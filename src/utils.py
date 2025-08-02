@@ -1,23 +1,39 @@
+import math
 import string
 import sys
-from cryptography.hazmat.primitives.ciphers import Cipher, modes, algorithms
 import os
+from cryptography.hazmat.primitives.ciphers import Cipher, modes, algorithms
 
-"""
-Verifie que le dechiffrement d'un message a bien été effectué sur la base de certains critères.
 
-Args: 
-    texte(str): Le texte supposé déchiffré.
-    
-Returns: 
-    JSON(dictionnaire): statistiques sur le texte soit
-    -le pourcentage de caratères imprimables,
-    -le nombre de mots,
-    -le pourcentage de mots valide, 
-    -les mots non valides et 
-    -le pourcentage de ponctuation respecté
-"""
+def calculer_entropie(bytes):
+   entropie = 0
+   proba_byte = 0
+   for specifique_byte in bytes:
+       i = 1
+       for chaque_byte in bytes:
+            if(chaque_byte == specifique_byte):
+                i += 1
+       proba_byte = 1 / i
+       entropie +=  (proba_byte) * math.log(1/proba_byte, 8)
+   return entropie
+
+
 def verifier_texte_dechiffre(texte: str):
+  """
+    Verifie que le dechiffrement d'un message a bien été effectué sur la base de certains critères.
+
+    Args: 
+        texte(str): Le texte supposé déchiffré.
+
+    Returns: 
+        JSON(dictionnaire): statistiques sur le texte soit
+        -le pourcentage de caratères imprimables,
+        -le nombre de mots,
+        -le pourcentage de mots valide, 
+        -les mots non valides et 
+        -le pourcentage de ponctuation respecté
+  """
+  
     #Statistiques sur le texte 
     
     stats={
@@ -99,10 +115,11 @@ def verifier_texte_dechiffre(texte: str):
     return stats
 
     
-"""
-Fonction utilitaire de rangement du dictionnaire anglais téléchargé
-"""
+
 def rangerDico():
+  """
+    Fonction utilitaire de rangement du dictionnaire anglais téléchargé
+  """
     i=0
     compte = 0
     # Ouverture du grand dictionnaire.
