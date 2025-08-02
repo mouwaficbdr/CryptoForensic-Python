@@ -1,7 +1,13 @@
 from ..crypto_analyzer import CryptoAnalyzer
 from ..utils import calculer_entropie_shannon
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.primitives import hashes
 
 class Aes_Cbc_Analyzer(CryptoAnalyzer): 
+  
+  _PBKDF2_SALT = b"sel_secret"
+  _PBKDF2_ITERATIONS = 10000
+  _PBKDF2_LONGUEUR_CLE = 32
   
   def identifier_algo(self, chemin_fichier_chiffre: str) -> float:
     '''
@@ -41,3 +47,34 @@ class Aes_Cbc_Analyzer(CryptoAnalyzer):
       return 0.0
       
     return probabilite
+  
+  def generer_cles_candidates(self, chemin_dictionnaire: str) -> list[bytes]:
+    '''
+      Génère les clées candidates pour déchiffrer le fichier à partir d'un dictionnaire en utilisant PBKDF2 pour dériver la clé par mot du dictionnaire.
+      
+      Args:
+        chemin_dictionnaire(str): le chemin du dictionnaire de mots de passes pour l'attaque par dictionnaire.
+        
+      Returns:
+        list[bytes]: liste des clés candidates.
+    '''
+    
+    clees_candidates: list[bytes] = []
+    kdf = PBKDF2HMAC(
+      algorithm=hashes.SHA256(),
+      length=self._PBKDF2_LONGUEUR_CLE,
+      iterations=self._PBKDF2_ITERATIONS,
+      salt=self._PBKDF2_SALT
+    )
+    try:
+      with open(chemin_dictionnaire, "r") as f: 
+        for ligne in f:
+          mot_de_passe_propre: str = ligne.strip()
+          mot_de_passe_en_octets: bytes = mot_de_passe_propre.encode('utf-8')
+          cle_derivee: bytes = kdf.derive(mot_de_passe_en_octets)
+          clees_candidates.append(cle_derivee)
+    except FileNotFoundError:
+      print("Le fichier spécifié n'existe pas.")
+      return []
+    
+    return clees_candidates
