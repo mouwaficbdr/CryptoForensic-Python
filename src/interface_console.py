@@ -53,19 +53,27 @@ class consoleInterface:
         time.sleep(0.04)
 
         choix = self.prompt.ask("Veuillez choisir une option ",choices=["1","2","3","4","5","6"])
-        if choix == "1":
-            self.menu_1()
-        elif choix == "2":
-            self.menu_2()
-        elif choix == "3":
-            self.menu_3()
-        elif choix == "4":
-            self.menu_4()
-        elif choix == "5":
-            self.menu_5()
-        elif choix == "6":
-            self.menu_6()
-
+        try:    
+            if choix == "1":
+                self.menu_1()
+            elif choix == "2":
+                self.menu_2()
+            elif choix == "3":
+                self.menu_3()
+            elif choix == "4":
+                self.menu_4()
+            elif choix == "5":
+                self.menu_5()
+            elif choix == "6":
+                self.menu_6()
+                
+            while choix > "6" or choix < "1":
+                self.console.print("Veuillez entrer un nombre entre 1 et 6")
+                choix = self.prompt.ask("Veuillez choisir une option ",choices=["1","2","3","4","5","6"])
+        except ValueError:
+            self.console.print("Veuillez entrer un nombre entre 1 et 6")
+        except Exception as e:
+            self.console.print(f"Une erreur est survenue : {e}")
 
     def menu_1(self):
         self.console.clear()
@@ -73,7 +81,7 @@ class consoleInterface:
         self.dynamiqueText("Veuillez entrer le chemin du fichier :","white")
         time.sleep(0.04)
         chemin_fichier = self.prompt.ask("Veuillez entrer le chemin du fichier : ")
-        resultat = Analyser_fichier_uniquement(self,chemin_fichier)
+        resultat = Analyser_fichier_uniquement(chemin_fichier)
         self.console.clear()
         self.dynamiqueText("Analyse en cours...","green")
         time.sleep(0.04)
