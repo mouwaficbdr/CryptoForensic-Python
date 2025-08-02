@@ -3,6 +3,8 @@ from rich.traceback import install
 from rich.markdown import Markdown
 from rich import print
 from rich.prompt import Prompt
+from detecteur_crypto import Analyser_fichier_uniquement
+from detecteur_crypto import Analyser_fichier_sequentiels
 import time, os
 
 install()
@@ -50,7 +52,81 @@ class consoleInterface:
         self.console.print(menuTag,menuOption)
         time.sleep(0.04)
 
-        self.prompt.ask("Veuillez choisir une option ",choices=["1","2","3","4","5","6"])
+        choix = self.prompt.ask("Veuillez choisir une option ",choices=["1","2","3","4","5","6"])
+        if choix == "1":
+            self.menu_1()
+        elif choix == "2":
+            self.menu_2()
+        elif choix == "3":
+            self.menu_3()
+        elif choix == "4":
+            self.menu_4()
+        elif choix == "5":
+            self.menu_5()
+        elif choix == "6":
+            self.menu_6()
 
 
+    def menu_1(self):
+        self.console.clear()
+        self.dynamiqueText("Analyse d'un fichier spécifique","green")
+        self.dynamiqueText("Veuillez entrer le chemin du fichier :","white")
+        time.sleep(0.04)
+        chemin_fichier = self.prompt.ask("Veuillez entrer le chemin du fichier : ")
+        resultat = Analyser_fichier_uniquement(self,chemin_fichier)
+        self.console.clear()
+        self.dynamiqueText("Analyse en cours...","green")
+        time.sleep(0.04)
+        self.console.clear()
+        self.dynamiqueText("Analyse terminée","green")
+        time.sleep(0.04)
+        self.default_menu()
+
+    def menu_2(self):
+        self.console.clear()
+        self.dynamiqueText("Mission complète automatique","green")
+        self.dynamiqueText("Veuillez entrer le chemin du dossier :","white")
+        time.sleep(0.04)
+        chemin_dossier = self.prompt.ask("Veuillez entrer le chemin du dossier : ")
+        self.console.clear()
+        self.dynamiqueText("Mission en cours...","green")
+        time.sleep(0.04)
+        self.console.clear()
+        self.dynamiqueText("Mission terminée","green")
+        time.sleep(0.04)
+        self.default_menu()
+
+    def menu_3(self):
+        self.console.clear()
+        self.dynamiqueText("Attaque par dictionnaire manuelle","green")
+        self.dynamiqueText("Veuillez entrer le chemin du fichier :","white")
+        time.sleep(0.04)
+        chemin_fichier = self.prompt.ask("Veuillez entrer le chemin du fichier : ")
+        self.console.clear()
+        self.dynamiqueText("Attaque en cours...","green")
+        time.sleep(0.04)
+        self.console.clear()
+        self.dynamiqueText("Attaque terminée","green")
+        time.sleep(0.04)
+        self.default_menu()
+
+    def menu_4(self):
+        self.console.clear()
+        self.dynamiqueText("Affichage des rapports","green")
+        time.sleep(0.04)
+        self.default_menu()
+
+    def menu_5(self):
+        self.console.clear()
+        self.dynamiqueText("Système d'aide intégré","green")
+        time.sleep(0.04)
+        self.default_menu()
+
+    def menu_6(self):
+        self.console.clear()
+        self.dynamiqueText("Au revoir !","green")
+        time.sleep(0.04)
+        self.console.clear()
+        self.console.exit()
+        
 consoleInterface()

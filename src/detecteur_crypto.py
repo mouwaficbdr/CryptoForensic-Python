@@ -47,11 +47,11 @@ class DetecteurCryptoOrchestrateur:
             
             #Parcours des algorithmes disponibles
             for nom_algo, analyzer in self.analyzers.items():
-                score_probabilite = analyzer.identifier_algo(chemin_fichier_chiffre)  # ← Retourne un float
+                score_probabilite = analyzer.identifier_algo(chemin_fichier_chiffre)  #  Retourne un float
                 print(f"{nom_algo}: score {score_probabilite:.2f}")
                 
-                if score_probabilite > 0.5:  # ← Comparaison correcte avec le seuil
-                    algorithme_detecte = nom_algo  # ← Stockage du nom de l'algorithme
+                if score_probabilite > 0.5:  # Comparaison correcte avec le seuil
+                    algorithme_detecte = nom_algo  # Stockage du nom de l'algorithme
                     print(f"Algorithme détecté: {algorithme_detecte} (score: {score_probabilite:.2f})")
                     
                     # Génération des clés candidates
