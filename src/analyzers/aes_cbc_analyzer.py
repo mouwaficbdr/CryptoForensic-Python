@@ -6,14 +6,31 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.padding import PKCS7
 
 class Aes_Cbc_Analyzer(CryptoAnalyzer): 
+  '''Détermine si l'algo aes_cbc est utilisé, génère des clés et tente de de déchffrer un fichier chiffré en utilisant les clés générées.
+  
+    Cette classe a trois méthodes:
+    - identifier_algo: Détermine si l'algo de chiffrement utilsé sur le fichier chiffré qui lui est passé en paramètre est l'aes_cbc.
+    - generer_cles_candidates: Génère une liste de clés candidates pour le déchiffrement du fichier chiffré
+    - dechiffrer: fait le déchiffrement proprement dit sur la base de la liste des clés générées
+    
+    Attributes:
+    _PBKDF2_SALT: le salt utilisé pour le chiffrement
+    _PBKDF2_ITERATIONS: le nombre d'itérations faites au chiffrement
+    _PBKDF2_LONGUEUR_CLE: la longueur en octets de la clé à utiliser
+
+  '''
   
   _PBKDF2_SALT = b"sel_secret"
-  _PBKDF2_ITERATIONS = 10000
+  _PBKDF2_ITERATIONS = 10000 
   _PBKDF2_LONGUEUR_CLE = 32
   
   def identifier_algo(self, chemin_fichier_chiffre: str) -> float:
     '''
-      Détermine la probabilité que l'algo de chiffrement utilisé soit l'aes cbc.
+      Détermine la probabilité que l'algo de chiffrement utilisé soit l'aes cbc en:
+      
+      - recherchant l'IV en tête
+      - vérifiant si le reste du fichier en dehors de l'IV a une taille multiple de 16 octets
+      - déterminant si l'entropie est assez élevée dans le fichier chiffré (>7.5)
       
       Args:
         chemin_fichier_chiffre(str): Le chemin du fichier chiffré à traiter (mission1.enc).
