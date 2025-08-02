@@ -2,38 +2,36 @@ import math
 import string
 import sys
 import os
-from cryptography.hazmat.primitives.ciphers import Cipher, modes, algorithms
 
-
-def calculer_entropie(bytes):
-   entropie = 0
-   proba_byte = 0
-   for specifique_byte in bytes:
-       i = 1
-       for chaque_byte in bytes:
+def calculer_entropie(bytes: bytes) -> float:
+    entropie = 0
+    proba_byte = 0
+    for specifique_byte in bytes:
+        i = 1
+        for chaque_byte in bytes:
             if(chaque_byte == specifique_byte):
                 i += 1
-       proba_byte = 1 / i
+        proba_byte = 1 / i
        entropie +=  (proba_byte) * math.log(1/proba_byte, 8)
-   return entropie
+    return entropie
 
 
 def verifier_texte_dechiffre(texte: str):
-  """
-    Verifie que le dechiffrement d'un message a bien été effectué sur la base de certains critères.
+    """
+        Verifie que le dechiffrement d'un message a bien été effectué sur la base de certains critères.
 
-    Args: 
-        texte(str): Le texte supposé déchiffré.
+        Args: 
+            texte(str): Le texte supposé déchiffré.
 
-    Returns: 
-        JSON(dictionnaire): statistiques sur le texte soit
-        -le pourcentage de caratères imprimables,
-        -le nombre de mots,
-        -le pourcentage de mots valide, 
-        -les mots non valides et 
-        -le pourcentage de ponctuation respecté
-  """
-  
+        Returns: 
+            JSON(dictionnaire): statistiques sur le texte soit
+            -le pourcentage de caratères imprimables,
+            -le nombre de mots,
+            -le pourcentage de mots valide, 
+            -les mots non valides et 
+            -le pourcentage de ponctuation respecté
+    """
+
     #Statistiques sur le texte 
     
     stats={
@@ -89,7 +87,7 @@ def verifier_texte_dechiffre(texte: str):
                 
             if not trouve : 
                 stats['non_mots'].append(mot)
-                     
+                    
     except Exception:
         tb=sys.exception().__traceback__
         raise Exception().with_traceback(tb)
@@ -117,9 +115,9 @@ def verifier_texte_dechiffre(texte: str):
     
 
 def rangerDico():
-  """
-    Fonction utilitaire de rangement du dictionnaire anglais téléchargé
-  """
+    """
+        Fonction utilitaire de rangement du dictionnaire anglais téléchargé
+    """
     i=0
     compte = 0
     # Ouverture du grand dictionnaire.
@@ -141,7 +139,7 @@ def rangerDico():
             fichier.close()
             i+=1
     print(compte)   
-       
+    
 # rangerDico()         
 
 print(verifier_texte_dechiffre('neither#nor avec, ded_caractère a'))
