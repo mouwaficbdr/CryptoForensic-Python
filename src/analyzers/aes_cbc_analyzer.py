@@ -82,6 +82,16 @@ class Aes_Cbc_Analyzer(CryptoAnalyzer):
     return clees_candidates
   
   def dechiffrer(self, chemin_fichier_chiffre: str, cle_donnee: bytes) -> bytes:
+    '''
+      Tente de déchiffrer un fichier chiffré à partir d'une clé prise en paramètre. Elle retire d'abord l'IV puis tente de décrypter le reste du fichier à l'aide de la clé en retirant le padding et retournes les données originales (idéalement non chiffrées).
+      
+      Args:
+        chemin_fichier_chiffre(str): chemin du fichier chiffre à déchiffrer
+        cle_donnee(bytes): clé candidate pour le déchiffrement
+      
+      Returns:
+        bytes: données déchiffrées
+    '''
     try:
       with open(chemin_fichier_chiffre, "rb") as f:
         initialization_vector = f.read(16)
