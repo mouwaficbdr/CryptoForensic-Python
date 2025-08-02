@@ -1,5 +1,5 @@
 from ..crypto_analyzer import CryptoAnalyzer
-from ..utils import calculer_entropie_shannon
+from ..utils import calculer_entropie
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
@@ -37,7 +37,7 @@ class Aes_Cbc_Analyzer(CryptoAnalyzer):
         else:
           return 0.0
         
-        entropie = calculer_entropie_shannon(donnees_chiffres)
+        entropie = calculer_entropie(donnees_chiffres)
         
         if entropie > 7.5: #Heuristique entropie élevée (L'entropie doit être supérieur à 7.5 pour confirmer le chiffrement robuste caractéristique des algos de chiffrement)
           probabilite += 0.4
