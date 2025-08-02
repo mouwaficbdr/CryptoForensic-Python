@@ -2,6 +2,8 @@ from ..crypto_analyzer import CryptoAnalyzer
 from ..utils import calculer_entropie_shannon
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives.padding import PKCS7
 
 class Aes_Cbc_Analyzer(CryptoAnalyzer): 
   
@@ -78,3 +80,34 @@ class Aes_Cbc_Analyzer(CryptoAnalyzer):
       return []
     
     return clees_candidates
+  
+  def dechiffrer(self, chemin_fichier_chiffre: str, cle_donnee: bytes) -> bytes:
+    try:
+      with open(chemin_fichier_chiffre, "rb") as f:
+        initialization_vector = f.read(16)
+        donnees_chiffrees = f.read()
+        
+        try:
+          #Création de l'objet Cipher pour le déchiffrage
+          algorithm_aes = algorithms.AES256(cle_donnee)
+          mode_cbc = modes.CBC(initialization_vector)
+          cipher = Cipher(algorithm_aes, mode_cbc)
+          
+          #Inistanciation du dechiffreur à partir du cipher
+          decrypteur = cipher.decryptor()
+          
+          #Instanciation du supresseur de padding
+          supresseur_padding = PKCS7(algorithm_aes.block_size).unpadder()
+          
+          donnees_chiffrees_avec_padding = decrypteur.update(donnees_chiffrees) + decrypteur.finalize()
+          donnees_originales = supresseur_padding.update(donnees_chiffrees_avec_padding) + supresseur_padding.finalize()
+          
+          return donnees_originales
+        
+        except ValueError:
+          print("La clé n'est pas la bonne")
+          return b""
+          
+    except FileNotFoundError:
+      print("Le fichier spécifié n'existe pas")
+      return b""
