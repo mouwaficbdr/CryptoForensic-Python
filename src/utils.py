@@ -45,7 +45,7 @@ def verifier_texte_dechiffre(texte: str):
   
     #Statistiques sur le texte 
     
-    stats={
+  stats={
         'imprimable':0,
         'nombre_mots':0,
         'p_mots_valide':0,
@@ -55,9 +55,9 @@ def verifier_texte_dechiffre(texte: str):
     
     #Verifier le pourcentage de caractères imprimables.
     
-    for lettre in texte:
-        if lettre.isprintable():
-            stats['imprimable']+= 100/len(texte)
+  for lettre in texte:
+    if lettre.isprintab:le():
+        stats['imprimable']+= 100/len(texte)
     
     # Traitement du texte brut pour obtenir une séquence distinct de pseudo-mot à cette étape séparé par des espaces
     
@@ -126,9 +126,9 @@ def verifier_texte_dechiffre(texte: str):
     
 
 def rangerDico():
-  """
-    Fonction utilitaire de rangement du dictionnaire anglais téléchargé
-  """
+    """
+        Fonction utilitaire de rangement du dictionnaire anglais téléchargé
+    """
     i=0
     compte = 0
     # Ouverture du grand dictionnaire.
