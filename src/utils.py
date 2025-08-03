@@ -12,11 +12,40 @@ def calculer_entropie(bytes: bytes) -> float:
             if(chaque_byte == specifique_byte):
                 i += 1
         proba_byte = 1 / i
-       entropie +=  (proba_byte) * math.log(1/proba_byte, 8)
+        entropie +=  (proba_byte) * math.log(1/proba_byte, 8)
     return entropie
 
 
-def verifier_texte_dechiffre(texte: str):
+def est_dechiffre(texte:str) -> bool: 
+    """
+        Détermine si oui ou non une chaine a été déchiffrée
+        
+        Args: 
+            texte(str): la chaine en supposée déchiffrée
+        Returns: 
+            bool: déchiffrée ou non
+    """
+    stats:dict=verifier_texte_dechiffre(texte)
+    pourcent=0
+    
+    # Les caractères imprimables constituent 50% de la validation du déchiffrement
+    if stats['imprimable'] > 70 :
+        pourcent += 50
+    
+    # Le pourcentage de mots validés par les dictionnaires en constitue 30%
+    if stats['p_mots_valide'] > 50 :
+        pourcent += 30
+    
+    # Le respect de la ponctuation, les 20% restants
+    if stats['ponctuation'] > 50 :
+        pourcent += 20
+    
+    return True if pourcent > 70 else False
+           
+           
+           
+
+def verifier_texte_dechiffre(texte: str) -> dict[int, int, int, list, int]:
     """
         Verifie que le dechiffrement d'un message a bien été effectué sur la base de certains critères.
 
@@ -34,7 +63,7 @@ def verifier_texte_dechiffre(texte: str):
 
     #Statistiques sur le texte 
     
-    stats={
+    stats: dict = {
         'imprimable':0,
         'nombre_mots':0,
         'p_mots_valide':0,
@@ -111,7 +140,6 @@ def verifier_texte_dechiffre(texte: str):
             stats[key]=round(stats[key], 2)
     
     return stats
-
     
 
 def rangerDico():
