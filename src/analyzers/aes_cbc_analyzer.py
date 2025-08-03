@@ -20,9 +20,9 @@ class Aes_Cbc_Analyzer(CryptoAnalyzer):
 
   '''
   
-  _PBKDF2_SALT = b"sel_secret"
-  _PBKDF2_ITERATIONS = 10000 
-  _PBKDF2_LONGUEUR_CLE = 32
+  _PBKDF2_SALT = b"AES_CBC_SALT_2024" #Fourni
+  _PBKDF2_ITERATIONS = 10000  #Fourni
+  _PBKDF2_LONGUEUR_CLE = 32 #Longueur de la clé
   
   def identifier_algo(self, chemin_fichier_chiffre: str) -> float:
     '''
@@ -66,9 +66,34 @@ class Aes_Cbc_Analyzer(CryptoAnalyzer):
       
     return probabilite
   
+  def filtrer_dictionnaire_par_indices(self, chemin_dictionnaire: str) -> list[str]:
+    '''
+      Filtre le dictionnaire sur la base des indices fournis pour sélectionner uniquement les mots de passe pertinents.
+      
+      Args:
+        chemin_dictonnaire(str): chemin du dictionnaire
+      
+      Returns:
+        list[str]: liste des mots retenus
+    '''
+    
+    mots_de_passe_cible: list[str] = []
+    annees_olympiques: list[str] = ["1900", "1924", "2024"] #Annees où Paris a acceuili les JO
+    
+    try:
+      with open(chemin_dictionnaire, "r") as f:
+        for ligne in f:
+          mot_propre:str = ligne.strip()
+          if mot_propre.startswith("paris") and mot_propre.endswith(tuple(annees_olympiques)): #"paris" car Paris = Ville Lumière = Capitale francaise comme l'indiquent les indices
+            mots_de_passe_cible.append(mot_propre)
+      return mots_de_passe_cible        
+    except FileNotFoundError:
+      return []
+    
+  
   def generer_cles_candidates(self, chemin_dictionnaire: str) -> list[bytes]:
     '''
-      Génère les clées candidates pour déchiffrer le fichier à partir d'un dictionnaire en utilisant PBKDF2 pour dériver la clé par mot du dictionnaire.
+      Génère les clées candidates pour déchiffrer le fichier à partir de la liste retournée par filtrer_dictionnaire_par_indices.
       
       Args:
         chemin_dictionnaire(str): le chemin du dictionnaire de mots de passes pour l'attaque par dictionnaire.
@@ -77,6 +102,8 @@ class Aes_Cbc_Analyzer(CryptoAnalyzer):
         list[bytes]: liste des clés candidates.
     '''
     
+    mots_de_passe_cible = self.filtrer_dictionnaire_par_indices(chemin_dictionnaire)
+    
     clees_candidates: list[bytes] = []
     kdf = PBKDF2HMAC(
       algorithm=hashes.SHA256(),
@@ -84,16 +111,11 @@ class Aes_Cbc_Analyzer(CryptoAnalyzer):
       iterations=self._PBKDF2_ITERATIONS,
       salt=self._PBKDF2_SALT
     )
-    try:
-      with open(chemin_dictionnaire, "r") as f: 
-        for ligne in f:
-          mot_de_passe_propre: str = ligne.strip()
-          mot_de_passe_en_octets: bytes = mot_de_passe_propre.encode('utf-8')
-          cle_derivee: bytes = kdf.derive(mot_de_passe_en_octets)
-          clees_candidates.append(cle_derivee)
-    except FileNotFoundError:
-      return []
-    
+    for mot_de_passe in mots_de_passe_cible:
+      mot_de_passe_en_octets: bytes = mot_de_passe.encode('utf-8')
+      cle_derivee: bytes = kdf.derive(mot_de_passe_en_octets)
+      clees_candidates.append(cle_derivee)
+
     return clees_candidates
   
   def dechiffrer(self, chemin_fichier_chiffre: str, cle_donnee: bytes) -> bytes:
