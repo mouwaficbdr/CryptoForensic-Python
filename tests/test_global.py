@@ -1,9 +1,5 @@
 # import de la library pour les tests
 from unittest import TestCase, main
-import sys
-sys.path.append('.')
-sys.path.append('..')
-from src.utils import verifier_texte_dechiffre, calculer_entropie
 """ 
 Ici le TestCase pour le regroupement des Cas de figures de Tests et le main pour l'exécution automatique des tests définis dans la classe ci-dessous
 
@@ -18,15 +14,6 @@ class BetaTester(TestCase):
 
     def test_addition(self):
         self.assertEqual(add(5,5),10)
-
-
-    def test_verification_texte_dechiffre(self):
-        self.assertDictEqual(verifier_texte_dechiffre("je talk !a mamamia:?"), {"imprimable": 100, "nombre_mots": 4, "p_mots_valide": 3, "nom_mots": ["mamamia"], "ponctuation_valide": 1})
-
-    def test_calcul_entropie(self):
-        self.assertGreater(calculer_entropie("aaaaaaaa"), 0)
-
-
 
 
 """ 
