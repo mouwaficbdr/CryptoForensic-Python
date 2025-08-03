@@ -2,7 +2,6 @@ import math
 import string
 import sys
 import os
-from cryptography.hazmat.primitives.ciphers import Cipher, modes, algorithms
 
 
 def calculer_entropie(bytes) -> float:
@@ -28,36 +27,36 @@ def calculer_entropie(bytes) -> float:
 
 
 def verifier_texte_dechiffre(texte: str):
-  """
-    Verifie que le dechiffrement d'un message a bien été effectué sur la base de certains critères.
+    """
+        Verifie que le dechiffrement d'un message a bien été effectué sur la base de certains critères.
 
-    Args: 
-        texte(str): Le texte supposé déchiffré.
+        Args: 
+            texte(str): Le texte supposé déchiffré.
 
-    Returns: 
-        JSON(dictionnaire): statistiques sur le texte soit
-        -le pourcentage de caratères imprimables,
-        -le nombre de mots,
-        -le pourcentage de mots valide, 
-        -les mots non valides et 
-        -le pourcentage de ponctuation respecté
-  """
-  
+        Returns: 
+            JSON(dictionnaire): statistiques sur le texte soit
+            -le pourcentage de caratères imprimables,
+            -le nombre de mots,
+            -le pourcentage de mots valide, 
+            -les mots non valides et 
+            -le pourcentage de ponctuation respecté
+    """
+
     #Statistiques sur le texte 
     
-  stats={
-        'imprimable':0,
-        'nombre_mots':0,
-        'p_mots_valide':0,
-        'non_mots':[],
-        'ponctuation_valide':0
-    }
+    stats={
+            'imprimable':0,
+            'nombre_mots':0,
+            'p_mots_valide':0,
+            'non_mots':[],
+            'ponctuation_valide':0
+        }
     
     #Verifier le pourcentage de caractères imprimables.
     
-  for lettre in texte:
-    if lettre.isprintab:le():
-        stats['imprimable']+= 100/len(texte)
+    for lettre in texte:
+        if lettre.isprintable():
+            stats['imprimable']+= 100/len(texte)
     
     # Traitement du texte brut pour obtenir une séquence distinct de pseudo-mot à cette étape séparé par des espaces
     
@@ -98,7 +97,7 @@ def verifier_texte_dechiffre(texte: str):
                 
             if not trouve : 
                 stats['non_mots'].append(mot)
-                     
+                    
     except Exception:
         tb=sys.exception().__traceback__
         raise Exception().with_traceback(tb)
@@ -150,7 +149,7 @@ def rangerDico():
             fichier.close()
             i+=1
     print(compte)   
-       
+    
 # rangerDico()         
 
 print(verifier_texte_dechiffre('neither#nor avec, ded_caractère a'))
