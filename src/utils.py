@@ -21,15 +21,11 @@ def calculer_entropie(bytes) -> float:
        for chaque_byte in bytes:
             if(chaque_byte == specifique_byte):
                 i += 1
-<<<<<<< HEAD
+
        proba_byte = 1 / i
        entropie +=  (proba_byte) * math.log(1/proba_byte, 8)
    return entropie
-=======
-        proba_byte = 1 / i
-        entropie +=  (proba_byte) * math.log(1/proba_byte, 8)
-    return entropie
->>>>>>> 267a282fa6e0765b0437b0aa3ef6139dc3453987
+
 
 
 def est_dechiffre(texte:str) -> bool: 
@@ -79,15 +75,6 @@ def verifier_texte_dechiffre(texte: str) -> dict[int, int, int, list, int]:
 
     #Statistiques sur le texte 
     
-<<<<<<< HEAD
-    stats={
-            'imprimable':0,
-            'nombre_mots':0,
-            'p_mots_valide':0,
-            'non_mots':[],
-            'ponctuation_valide':0
-        }
-=======
     stats: dict = {
         'imprimable':0,
         'nombre_mots':0,
@@ -95,7 +82,6 @@ def verifier_texte_dechiffre(texte: str) -> dict[int, int, int, list, int]:
         'non_mots':[],
         'ponctuation_valide':0
     }
->>>>>>> 267a282fa6e0765b0437b0aa3ef6139dc3453987
     
     #Verifier le pourcentage de caractères imprimables.
     
@@ -105,7 +91,7 @@ def verifier_texte_dechiffre(texte: str) -> dict[int, int, int, list, int]:
     
     # Traitement du texte brut pour obtenir une séquence distinct de pseudo-mot à cette étape séparé par des espaces
     
-    tab='./:!\\}{_%*$£&#;,~"()[]=§|`^@'
+    tab='./:!\\}{_%*$£&#;,~"()[]=§|`^@?'
     copy=texte
     for lettre in tab:
         copy=copy.replace(lettre, ' ')
@@ -119,9 +105,9 @@ def verifier_texte_dechiffre(texte: str) -> dict[int, int, int, list, int]:
             trouve=False
             if mot == '': continue
             for syl in ['Fr', 'En']:
-                chemin=f"{os.curdir}\\CryptoForensic-Python\\dico{syl}\\{mot[0]}.txt"
-                
-                with open(chemin, 'r') as f:
+                chemin=f"{os.curdir}.\\CryptoForensic-Python\\dico{syl}\\{mot[0]}.txt"
+                exit
+                with open(chemin, 'r') as f: 
                     ligne=f.readline()
                     ligne=ligne.removesuffix('\n')
                     
@@ -129,7 +115,7 @@ def verifier_texte_dechiffre(texte: str) -> dict[int, int, int, list, int]:
                         
                         if ligne == mot:
                             stats['p_mots_valide']+=100/len(copy)
-                            print(stats['p_mots_valide'], mot)
+                            print('\n', stats['p_mots_valide'], mot,)
                             trouve=True
                             break
                         
@@ -196,4 +182,3 @@ def rangerDico():
     
 # rangerDico()         
 
-print(verifier_texte_dechiffre('neither#nor avec, ded_caractère a'))
