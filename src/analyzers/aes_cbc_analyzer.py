@@ -62,7 +62,6 @@ class Aes_Cbc_Analyzer(CryptoAnalyzer):
           return 0.0
         
     except FileNotFoundError:
-      print("Le fichier spécifié n'existe pas.")
       return 0.0
       
     return probabilite
@@ -93,7 +92,6 @@ class Aes_Cbc_Analyzer(CryptoAnalyzer):
           cle_derivee: bytes = kdf.derive(mot_de_passe_en_octets)
           clees_candidates.append(cle_derivee)
     except FileNotFoundError:
-      print("Le fichier spécifié n'existe pas.")
       return []
     
     return clees_candidates
@@ -132,9 +130,7 @@ class Aes_Cbc_Analyzer(CryptoAnalyzer):
           return donnees_originales
         
         except ValueError:
-          print("La clé n'est pas la bonne")
           return b""
           
     except FileNotFoundError:
-      print("Le fichier spécifié n'existe pas")
       return b""
