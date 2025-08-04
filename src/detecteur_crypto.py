@@ -13,5 +13,3 @@ class DetecteurCryptoOrchestrateur:
     """
     def __init__(self):
         self.aes_cbc_analyzer = AesCbcAnalyzer()
-        
-
