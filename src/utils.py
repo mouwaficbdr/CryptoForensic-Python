@@ -1,29 +1,36 @@
 import math
 import string
 import sys
-import os
+from typing import Any, Dict, List, TypedDict
 
-def calculer_entropie(bytes) -> float:
-   '''
-      Calcul l'entropie (le désordre dans une suite de données) afin de déterminer le degré d'improbabilité d'une chaine de données.
+class StatsDict(TypedDict):
+    imprimable: float
+    nombre_mots: int
+    p_mots_valide: float
+    non_mots: List[str]
+    ponctuation_valide: int
 
-      Args:
-        bytes(bytes): La donnée brute contenue dans le fichier crypté.
-
-      Returns:
-        float: l'entropie calculée.
+def calculer_entropie(bytes: bytes) -> float:
     '''
-   entropie = 0
-   proba_byte = 0
-   for specifique_byte in bytes:
-       i = 1
-       for chaque_byte in bytes:
-            if(chaque_byte == specifique_byte):
-                i += 1
+        Calcul l'entropie (le désordre dans une suite de données) afin de déterminer le degré d'improbabilité d'une chaine de données.
 
-       proba_byte = 1 / i
-       entropie +=  (proba_byte) * math.log(1/proba_byte, 8)
-   return entropie
+        Args:
+            bytes(bytes): La donnée brute contenue dans le fichier crypté.
+
+        Returns:
+            float: l'entropie calculée.
+    '''
+    entropie = 0
+    proba_byte = 0
+    for specifique_byte in bytes:
+        i = 1
+        for chaque_byte in bytes:
+                if(chaque_byte == specifique_byte):
+                    i += 1
+
+        proba_byte = 1 / i
+        entropie +=  (proba_byte) * math.log(1/proba_byte, 8)
+    return entropie
 
 
 
@@ -52,11 +59,10 @@ def est_dechiffre(texte:str) -> bool:
         pourcent += 20
     
     return True if pourcent > 70 else False
-           
-           
-           
 
-def verifier_texte_dechiffre(texte: str) -> dict[int, int, int, list, int]:
+        
+
+def verifier_texte_dechiffre(texte: str) -> Dict[str, Any]:
     """
         Verifie que le dechiffrement d'un message a bien été effectué sur la base de certains critères.
 
@@ -82,51 +88,51 @@ def verifier_texte_dechiffre(texte: str) -> dict[int, int, int, list, int]:
         'ponctuation_valide':0
     }
     
+    if not texte:
+        return stats
+
     #Verifier le pourcentage de caractères imprimables.
-    
-    for lettre in texte:
-        if lettre.isprintable():
-            stats['imprimable']+= 100/len(texte)
-    
+    stats['imprimable'] = int(sum(1 for char in texte if char.isprintable()) / len(texte) * 100)
+
     # Traitement du texte brut pour obtenir une séquence distincte de pseudo-mot à cette étape séparé par des espaces
     
     tab='./:!\\}{_%*$£&#;,~"()[]=§|`^@?'
     copy=texte
     for lettre in tab:
         copy=copy.replace(lettre, ' ')
-    copy=copy.strip().split(' ')
-    stats['nombre_mots']=len(copy)
+    mots = [mot for mot in copy.strip().split(' ') if mot]
+    stats['nombre_mots']=len(mots)
     
     # Verifier que le chaque mot du texte est un mot anglais/francais 
     
     try:
-        for mot in copy:
+        mots_valides = 0
+        for mot in mots:
             trouve=False
-            if mot == '': continue
+            if not mot: continue
+            
+            first_char = mot[0].lower()
+            
             for syl in ['Fr', 'En']:
-                chemin=f"{os.curdir}.\\CryptoForensic-Python\\dico{syl}\\{mot[0]}.txt"
-                exit
-                with open(chemin, 'r') as f: 
-                    ligne=f.readline()
-                    ligne=ligne.removesuffix('\n')
-                    
-                    while not trouve and ligne != "":
-                        
-                        if ligne == mot:
-                            stats['p_mots_valide']+=100/len(copy)
-                            print('\n', stats['p_mots_valide'], mot,)
-                            trouve=True
-                            break
-                        
-                        ligne=f.readline()
-                        ligne=ligne.removesuffix('\n')
-                        
-                f.close()
+                chemin=f"dico{syl}/{first_char}.txt"
+                try:
+                    with open(chemin, 'r', encoding='latin-1') as f: 
+                        for ligne in f:
+                            if ligne.strip() == mot:
+                                mots_valides += 1
+                                trouve=True
+                                break
+                except FileNotFoundError:
+                    continue
                 
                 if trouve : break
                 
             if not trouve : 
                 stats['non_mots'].append(mot)
+        if mots:
+            stats['p_mots_valide'] = round((mots_valides / len(mots)) * 100, 2)
+        else:
+            stats['p_mots_valide'] = 0.0
                     
     except Exception:
         tb=sys.exception().__traceback__
@@ -136,24 +142,17 @@ def verifier_texte_dechiffre(texte: str) -> dict[int, int, int, list, int]:
     #Verifier la structure de ponctuation.
 
     points='.?!;,'
-    nbr_ponct=0
-    for point in points :
-        nbr_ponct+=texte.count(point)
-    for point in points :
-        partition= texte.partition(point)
-        if partition[2].startswith(' ') :
-            if (point in '?!.' and partition[2].lstrip()[0].isupper()) or (point in ';,' and partition[2].lstrip()[0].islower()):
-                stats['ponctuation_valide']+=100/nbr_ponct
-        
-    for key in stats:
-        print(key)
-        if isinstance(stats[key], float):
-            stats[key]=round(stats[key], 2)
+    count = 0
+    for i, char in enumerate(texte):
+        if char in points:
+            if (i == len(texte) - 1) or (texte[i+1] == ' '):
+                count += 1
+    stats['ponctuation_valide'] = count
     
     return stats
     
 
-def rangerDico():
+def rangerDico() -> None:
     """
         Fonction utilitaire de rangement du dictionnaire anglais téléchargé
         Pour effectuer des tests
@@ -162,11 +161,13 @@ def rangerDico():
     compte = 0
     # Ouverture du grand dictionnaire.
     try :
-        with open(f"{os.path.abspath(os.curdir)}\\words_alpha.txt",'r') as f:
+        # Utilisation de Path pour un chemin portable
+        words_path = Path.cwd() / "words_alpha.txt"
+        with open(words_path,'r') as f:
             while i<26:
                 # Définition du chemin vers le fichier de chaque mot en fonction de l'alphabet.
-                chemin=f"{os.curdir}\\dicoEn\\{string.ascii_lowercase[i]}.txt"
-                with open(chemin, 'a') as fichier:
+                dico_path = Path.cwd() / "dicoEn" / f"{string.ascii_lowercase[i]}.txt"
+                with open(dico_path, 'a') as fichier:
                     #Ecriture dans le fichier.
                     fichier.write(string.ascii_lowercase[i]+'\n')
                     while 1 :
