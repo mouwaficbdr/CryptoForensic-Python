@@ -145,11 +145,15 @@ def verifier_texte_dechiffre(texte: str) -> Dict[str, Any]:
 
     points='.?!;,'
     count = 0
+    nbr_points = 0
     for i, char in enumerate(texte):
         if char in points:
+            nbr_points += 1
             if (i == len(texte) - 1) or (texte[i+1] == ' '):
                 count += 1
-    stats['ponctuation_valide'] = count
+                
+    if not nbr_points: nbr_points=1
+    stats['ponctuation_valide'] = round(count*100/nbr_points, 2)
     
     return stats
     
@@ -186,5 +190,3 @@ def rangerDico() -> None:
     except FileNotFoundError: 
         print('Fichier non trouvé.')
 # rangerDico()         
-
-print(verifier_texte_dechiffre('neither#nor, and .this.'))

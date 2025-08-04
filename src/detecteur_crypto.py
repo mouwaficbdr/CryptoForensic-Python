@@ -1,4 +1,4 @@
-import AesCbcAnalyzer
+from analyzers.aes_cbc_analyzer import Aes_Cbc_Analyzer
 from crypto_analyzer import identifier_algo
 
 """
@@ -12,4 +12,4 @@ class DetecteurCryptoOrchestrateur:
         Initialisation de l'analyseur AES-CBC     
     """
     def __init__(self):
-        self.aes_cbc_analyzer = AesCbcAnalyzer()
+        self.aes_cbc_analyzer = Aes_Cbc_Analyzer()

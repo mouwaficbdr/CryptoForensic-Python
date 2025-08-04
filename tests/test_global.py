@@ -40,7 +40,7 @@ class BetaTester(TestCase):
         self.assertEqual(resultat['nombre_mots'], 4)
         self.assertAlmostEqual(resultat['p_mots_valide'], 75.0)
         self.assertEqual(resultat['non_mots'], ["mamamia"])
-        self.assertEqual(resultat['ponctuation_valide'], 1)
+        self.assertEqual(resultat['ponctuation_valide'], 50.0)
 
     def test_calcul_entropie(self) -> None:
         self.assertGreater(calculer_entropie("aaaaaaaa"), 0)
