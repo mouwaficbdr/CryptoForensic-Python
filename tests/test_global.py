@@ -35,10 +35,16 @@ class BetaTester(TestCase):
 
 
     def test_verification_texte_dechiffre(self):
-        self.assertDictEqual(verifier_texte_dechiffre("je talk !a mamamia:?"), {"imprimable": 100, "nombre_mots": 4, "p_mots_valide": 3, "nom_mots": ["mamamia"], "ponctuation_valide": 1})
+        resultat = verifier_texte_dechiffre("je talk !a mamamia:?")
+        self.assertAlmostEqual(resultat['imprimable'], 100.0)
+        self.assertEqual(resultat['nombre_mots'], 4)
+        self.assertAlmostEqual(resultat['p_mots_valide'], 75.0)
+        self.assertEqual(resultat['non_mots'], ["mamamia"])
+        self.assertEqual(resultat['ponctuation_valide'], 1)
 
-    def test_calcul_entropie(self):
+    def test_calcul_entropie(self) -> None:
         self.assertGreater(calculer_entropie("aaaaaaaa"), 0)
 
 
-main()
+if __name__ == '__main__':
+    main()
