@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 import os
 
 class generer_rapport_mission():
@@ -18,7 +18,7 @@ class generer_rapport_mission():
         equivalence=['AES-CBC-256', 'CHACHA20', 'BLOWFISH', 'AES-GCM', 'FERNET']
         
         try :
-            rapport= f"RAPPORT DE SYNTHESE DU {date.today().strftime("%d/%m/%y")}\n " 
+            rapport= f"RAPPORT DE SYNTHESE DU {date.today().strftime("%d/%m/%y")} à {str(datetime.now().time()).split('.')[0]}\n " 
             +  f"Mission {equivalence.index(resultats_de_mission['algorithme'].toupper()) + 1}: {resultats_de_mission['algorithme'].toupper()} \n" 
             +  "I - Statistiques relatives à l'analyse du fichier\n"
             + f"Fichier crypté par cet algorithme: {resultats_de_mission['fichier']}\n"
@@ -40,3 +40,27 @@ class generer_rapport_mission():
         
         return rapport
     
+    
+    def recuperer_ancien_rapport(self, base_date:str)->list|str:
+        """
+            Récupère un/les ancien(s) rapport(s) dans le fichier rapport.txt
+            
+            Args: 
+                base_date(str): la date à laquelle le/les rapport(s) a/ont été émis
+            Returns:
+                list|str: les rapports s'ils existent.
+
+
+        """
+        rapport=[]
+        try:
+            with open(f"{os.path.abspath(os.curdir)}\\rapport.txt", 'r') as f:
+                line=f.readline()
+                while line != "" :
+                    if line.find(base_date) != -1:
+                        rapport.append(line)
+                f.close()
+                return rapport if rapport.count() > 0 else 'Aucun rapport trouvé à cette date.'
+        except FileNotFoundError:
+            print('Fichier non trouvé')
+            

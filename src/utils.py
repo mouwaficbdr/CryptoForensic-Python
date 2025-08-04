@@ -145,6 +145,7 @@ def verifier_texte_dechiffre(texte: str) -> dict[int, int, int, list, int]:
 def rangerDico():
     """
         Fonction utilitaire de rangement du dictionnaire anglais téléchargé
+        Pour effectuer des tests
     """
     i=0
     compte = 0
@@ -169,7 +170,7 @@ def rangerDico():
                 i+=1
         print(compte)   
     except FileNotFoundError: 
-        raise FileNotFoundError.__call__()
+        print('Fichier non trouvé.')
 # rangerDico()         
 
 print(verifier_texte_dechiffre('neither#nor avec, ded_caractère a'))
