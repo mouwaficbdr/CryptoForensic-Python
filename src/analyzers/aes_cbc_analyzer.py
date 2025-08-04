@@ -155,4 +155,4 @@ class Aes_Cbc_Analyzer(CryptoAnalyzer):
           return b""
           
     except FileNotFoundError:
-      return b""
+      raise
