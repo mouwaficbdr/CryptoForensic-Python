@@ -22,11 +22,6 @@ dist/
 .DS_Store
 Thumbs.db
 
-# Données sensibles
-# Le dossier keys/ est ignoré pour éviter de versionner des clés ou des dictionnaires sensibles.
-# Si vos dictionnaires sont publics et nécessaires au projet, commentez ou retirez la ligne ci-dessous.
-keys/
-
 # Artefacts de test
 .pytest_cache/
 .coverage

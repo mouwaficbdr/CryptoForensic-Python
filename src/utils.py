@@ -12,11 +12,40 @@ def calculer_entropie(bytes: bytes) -> float:
             if(chaque_byte == specifique_byte):
                 i += 1
         proba_byte = 1 / i
-       entropie +=  (proba_byte) * math.log(1/proba_byte, 8)
+        entropie +=  (proba_byte) * math.log(1/proba_byte, 8)
     return entropie
 
 
-def verifier_texte_dechiffre(texte: str):
+def est_dechiffre(texte:str) -> bool: 
+    """
+        Détermine si oui ou non une chaine a été déchiffrée
+        
+        Args: 
+            texte(str): la chaine en supposée déchiffrée
+        Returns: 
+            bool: déchiffrée ou non
+    """
+    stats:dict=verifier_texte_dechiffre(texte)
+    pourcent=0
+    
+    # Les caractères imprimables constituent 50% de la validation du déchiffrement
+    if stats['imprimable'] > 70 :
+        pourcent += 50
+    
+    # Le pourcentage de mots validés par les dictionnaires en constitue 30%
+    if stats['p_mots_valide'] > 50 :
+        pourcent += 30
+    
+    # Le respect de la ponctuation, les 20% restants
+    if stats['ponctuation'] > 50 :
+        pourcent += 20
+    
+    return True if pourcent > 70 else False
+           
+           
+           
+
+def verifier_texte_dechiffre(texte: str) -> dict[int, int, int, list, int]:
     """
         Verifie que le dechiffrement d'un message a bien été effectué sur la base de certains critères.
 
@@ -34,7 +63,7 @@ def verifier_texte_dechiffre(texte: str):
 
     #Statistiques sur le texte 
     
-    stats={
+    stats: dict = {
         'imprimable':0,
         'nombre_mots':0,
         'p_mots_valide':0,
@@ -48,7 +77,7 @@ def verifier_texte_dechiffre(texte: str):
         if lettre.isprintable():
             stats['imprimable']+= 100/len(texte)
     
-    # Traitement du texte brut pour obtenir une séquence distinct de pseudo-mot à cette étape séparé par des espaces
+    # Traitement du texte brut pour obtenir une séquence distincte de pseudo-mot à cette étape séparé par des espaces
     
     tab='./:!\\}{_%*$£&#;,~"()[]=§|`^@'
     copy=texte
@@ -57,7 +86,7 @@ def verifier_texte_dechiffre(texte: str):
     copy=copy.strip().split(' ')
     stats['nombre_mots']=len(copy)
     
-    # Verifier que le texte est un mot anglais/francais 
+    # Verifier que le chaque mot du texte est un mot anglais/francais 
     
     try:
         for mot in copy:
@@ -111,35 +140,37 @@ def verifier_texte_dechiffre(texte: str):
             stats[key]=round(stats[key], 2)
     
     return stats
-
     
 
 def rangerDico():
     """
         Fonction utilitaire de rangement du dictionnaire anglais téléchargé
+        Pour effectuer des tests
     """
     i=0
     compte = 0
     # Ouverture du grand dictionnaire.
-    with open(f"{os.path.abspath(os.curdir)}\\words_alpha.txt",'r') as f:
-        while i<26:
-            # Définition du chemin vers le fichier de chaque mot en fonction de l'alphabet.
-            chemin=f"{os.curdir}\\CryptoForensic-Python\\dicoEn\\{string.ascii_lowercase[i]}.txt"
-            with open(chemin, 'a') as fichier:
-                #Ecriture dans le fichier.
-                fichier.write(string.ascii_lowercase[i]+'\n')
-                while 1 :
-                    ligne=f.readline()
-                    if ligne.startswith(string.ascii_lowercase[i]) or ligne.startswith('y'):
-                        fichier.write(ligne) 
-                        compte += 1 
-                    else :
-                        break
-            # Fermeture du fichier apres écriture du dernier mot.
-            fichier.close()
-            i+=1
-    print(compte)   
-    
+    try :
+        with open(f"{os.path.abspath(os.curdir)}\\words_alpha.txt",'r') as f:
+            while i<26:
+                # Définition du chemin vers le fichier de chaque mot en fonction de l'alphabet.
+                chemin=f"{os.curdir}\\dicoEn\\{string.ascii_lowercase[i]}.txt"
+                with open(chemin, 'a') as fichier:
+                    #Ecriture dans le fichier.
+                    fichier.write(string.ascii_lowercase[i]+'\n')
+                    while 1 :
+                        ligne=f.readline()
+                        if ligne.startswith(string.ascii_lowercase[i]) or ligne.startswith('y'):
+                            fichier.write(ligne) 
+                            compte += 1 
+                        else :
+                            break
+                # Fermeture du fichier apres écriture du dernier mot.
+                fichier.close()
+                i+=1
+        print(compte)   
+    except FileNotFoundError: 
+        print('Fichier non trouvé.')
 # rangerDico()         
 
 print(verifier_texte_dechiffre('neither#nor avec, ded_caractère a'))
