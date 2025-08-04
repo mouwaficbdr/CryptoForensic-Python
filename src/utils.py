@@ -89,7 +89,7 @@ def verifier_texte_dechiffre(texte: str) -> dict[int, int, int, list, int]:
         if lettre.isprintable():
             stats['imprimable']+= 100/len(texte)
     
-    # Traitement du texte brut pour obtenir une séquence distinct de pseudo-mot à cette étape séparé par des espaces
+    # Traitement du texte brut pour obtenir une séquence distincte de pseudo-mot à cette étape séparé par des espaces
     
     tab='./:!\\}{_%*$£&#;,~"()[]=§|`^@?'
     copy=texte
@@ -98,7 +98,7 @@ def verifier_texte_dechiffre(texte: str) -> dict[int, int, int, list, int]:
     copy=copy.strip().split(' ')
     stats['nombre_mots']=len(copy)
     
-    # Verifier que le texte est un mot anglais/francais 
+    # Verifier que le chaque mot du texte est un mot anglais/francais 
     
     try:
         for mot in copy:
@@ -157,28 +157,31 @@ def verifier_texte_dechiffre(texte: str) -> dict[int, int, int, list, int]:
 def rangerDico():
     """
         Fonction utilitaire de rangement du dictionnaire anglais téléchargé
+        Pour effectuer des tests
     """
     i=0
     compte = 0
     # Ouverture du grand dictionnaire.
-    with open(f"{os.path.abspath(os.curdir)}\\words_alpha.txt",'r') as f:
-        while i<26:
-            # Définition du chemin vers le fichier de chaque mot en fonction de l'alphabet.
-            chemin=f"{os.curdir}\\CryptoForensic-Python\\dicoEn\\{string.ascii_lowercase[i]}.txt"
-            with open(chemin, 'a') as fichier:
-                #Ecriture dans le fichier.
-                fichier.write(string.ascii_lowercase[i]+'\n')
-                while 1 :
-                    ligne=f.readline()
-                    if ligne.startswith(string.ascii_lowercase[i]) or ligne.startswith('y'):
-                        fichier.write(ligne) 
-                        compte += 1 
-                    else :
-                        break
-            # Fermeture du fichier apres écriture du dernier mot.
-            fichier.close()
-            i+=1
-    print(compte)   
-    
+    try :
+        with open(f"{os.path.abspath(os.curdir)}\\words_alpha.txt",'r') as f:
+            while i<26:
+                # Définition du chemin vers le fichier de chaque mot en fonction de l'alphabet.
+                chemin=f"{os.curdir}\\dicoEn\\{string.ascii_lowercase[i]}.txt"
+                with open(chemin, 'a') as fichier:
+                    #Ecriture dans le fichier.
+                    fichier.write(string.ascii_lowercase[i]+'\n')
+                    while 1 :
+                        ligne=f.readline()
+                        if ligne.startswith(string.ascii_lowercase[i]) or ligne.startswith('y'):
+                            fichier.write(ligne) 
+                            compte += 1 
+                        else :
+                            break
+                # Fermeture du fichier apres écriture du dernier mot.
+                fichier.close()
+                i+=1
+        print(compte)   
+    except FileNotFoundError: 
+        print('Fichier non trouvé.')
 # rangerDico()         
 
