@@ -27,7 +27,15 @@ class AnalyzersTester(TestCase):
         self.assertIsInstance(self.analyser.generer_cles_candidates(self.wordlist), list)
 
     def test_exception_dechiffrer(self):
+        cles_candidates = self.analyser.generer_cles_candidates(self.wordlist)
+        
+        if not cles_candidates:
+            self.fail("La liste des clés candidates ne devrait pas être vide.")
+        
+        premiere_cle = cles_candidates[0]
+        
         with self.assertRaises(FileNotFoundError):
-            self.analyser.dechiffrer("no_file_dohi.txt", self.analyser.generer_cles_candidates(self.wordlist))
+            self.analyser.dechiffrer("no_file_dohi.txt", premiere_cle)
 
-main()
+if __name__ == '__main__':
+    main()
