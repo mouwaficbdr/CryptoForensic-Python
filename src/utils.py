@@ -116,7 +116,7 @@ def verifier_texte_dechiffre(texte: str) -> Dict[str, Any]:
             
             for syl in ['Fr', 'En']:
 
-                chemin = Path(f"dico{syl}") / f"{first_char}.txt"
+                chemin = Path(f"dico{syl}")/f"{first_char}.txt"
                 try:
                     with open(chemin, 'r', encoding='latin-1') as f: 
                         for ligne in f:
@@ -187,3 +187,4 @@ def rangerDico() -> None:
         print('Fichier non trouvé.')
 # rangerDico()         
 
+print(verifier_texte_dechiffre('neither#nor, and .this.'))
