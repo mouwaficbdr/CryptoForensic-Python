@@ -99,7 +99,7 @@ class Aes_Cbc_Analyzer(CryptoAnalyzer):
         chemin_dictionnaire(str): le chemin du dictionnaire de mots de passes pour l'attaque par dictionnaire.
         
       Returns:
-        list[bytes]: liste des clés candidates.
+        list[bytes]: liste des clés candidates. 
     '''
     
     mots_de_passe_cible = self.filtrer_dictionnaire_par_indices(chemin_dictionnaire)

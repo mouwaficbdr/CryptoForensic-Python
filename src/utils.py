@@ -3,7 +3,6 @@ import string
 import sys
 import os
 
-
 def calculer_entropie(bytes) -> float:
    '''
       Calcul l'entropie (le désordre dans une suite de données) afin de déterminer le degré d'improbabilité d'une chaine de données.
