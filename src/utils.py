@@ -1,6 +1,7 @@
 import math
 import string
 import sys
+from pathlib import Path
 from typing import Any, Dict, List, TypedDict
 
 class StatsDict(TypedDict):
@@ -114,7 +115,7 @@ def verifier_texte_dechiffre(texte: str) -> Dict[str, Any]:
             first_char = mot[0].lower()
             
             for syl in ['Fr', 'En']:
-                chemin=f"dico{syl}/{first_char}.txt"
+                chemin = Path(f"dico{syl}") / f"{first_char}.txt"
                 try:
                     with open(chemin, 'r', encoding='latin-1') as f: 
                         for ligne in f:
