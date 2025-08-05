@@ -1,0 +1,15 @@
+## **Algorithmes déployés lors des mission**
+**AES-256** :
+###### 1. **Hello Word** : Ceci est un exemple veuillez suivre ce format pour la documentation de vos algorithmes
+
+**Chacha20** :
+###### 1. **Hello Word** : Ceci est un exemple veuillez suivre ce format pour la documentation de vos algorithmes
+
+**Blowfish** :
+###### 1. **Hello Word** : Ceci est un exemple veuillez suivre ce format pour la documentation de vos algorithmes
+
+**AES-GCM** :
+###### 1. **Hello Word** : Ceci est un exemple veuillez suivre ce format pour la documentation de vos algorithmes
+
+**Fernet** :
+###### 1. **Hello Word** : Ceci est un exemple veuillez suivre ce format pour la documentation de vos algorithmes

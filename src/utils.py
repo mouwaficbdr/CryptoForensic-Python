@@ -1,6 +1,5 @@
 import math
 import string
-import sys
 from pathlib import Path
 from typing import Any, Dict, List, TypedDict
 
@@ -44,7 +43,7 @@ def est_dechiffre(texte:str) -> bool:
         Returns: 
             bool: déchiffrée ou non
     """
-    stats:dict=verifier_texte_dechiffre(texte)
+    stats:dict[str, Any] = verifier_texte_dechiffre(texte)
     pourcent=0
     
     # Les caractères imprimables constituent 50% de la validation du déchiffrement
@@ -81,7 +80,7 @@ def verifier_texte_dechiffre(texte: str) -> Dict[str, Any]:
 
     #Statistiques sur le texte 
     
-    stats: dict = {
+    stats: dict[str, Any] = {
         'imprimable':0,
         'nombre_mots':0,
         'p_mots_valide':0,
@@ -137,19 +136,22 @@ def verifier_texte_dechiffre(texte: str) -> Dict[str, Any]:
             stats['p_mots_valide'] = 0.0
                     
     except Exception:
-        tb=sys.exception().__traceback__
-        raise Exception().with_traceback(tb)
+        raise
         
 
     #Verifier la structure de ponctuation.
 
     points='.?!;,'
     count = 0
+    nbr_points = 0
     for i, char in enumerate(texte):
         if char in points:
+            nbr_points += 1
             if (i == len(texte) - 1) or (texte[i+1] == ' '):
                 count += 1
-    stats['ponctuation_valide'] = count
+                
+    if not nbr_points: nbr_points=1
+    stats['ponctuation_valide'] = round(count*100/nbr_points, 2)
     
     return stats
     
@@ -186,4 +188,3 @@ def rangerDico() -> None:
     except FileNotFoundError: 
         print('Fichier non trouvé.')
 # rangerDico()         
-
