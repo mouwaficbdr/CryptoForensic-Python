@@ -1,0 +1,1 @@
+RAPPORT DE SYNTHESE DU 05/08/25 à 00:01:06~ Mission 2: CHACHA20 ~ I - Statistiques relatives à l'analyse du fichier~Fichier crypté par cet algorithme: mission1.enc~Clé de déchiffrement identifiée: PK7 ~Nombre de tentatives: 127 ~Temps d'exécution: 368s ~ II - Résultats obtenusTaux réussite du déchiffrement: 97%(Succès)~Texte déchiffré: Je suis là! ~
