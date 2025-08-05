@@ -9,16 +9,12 @@ Ici le TestCase pour le regroupement des Cas de figures de Tests et le main pour
 
 """
 
-# Définition d'une fonction d'addition (+) pour les tests 
-def add(a,b):
-    return a+b
-
 class BetaTester(TestCase):
     #Définition de la méthode de test
     """ 
-        # La fonction doit être préfixé du mot test pour que le TestCase puisse le l'identifier en tant que méthode à tester (le snake_case ici devra être appliqué ici) 
+        # La fonction doit être préfixé du mot test pour que le TestCase puisse le l'identifier en tant que méthode à tester (le snake_case devra être appliqué ici) 
 
-        # En fonction du type de vérification que vous souhaitez effectué par rapport aux test les méthodes assert devront variés.
+        # En fonction du type de vérification que vous souhaitez effectuer par rapport aux test les méthodes assert devront varier.
         ex : * assertEqual() pour vérifier l'égalité. Dans le cas utilisé cette fonction vérifie si le retour de la fonction add correspond à la valeur 10
             * assertIn() pour vérifier si une variable est dans une iterable
             * assertIsInstance() pour vérifier le type de retour d'une variable ou fonction etc... (description des méthodes à l'appui)
@@ -30,9 +26,6 @@ class BetaTester(TestCase):
 
     """
 
-    def test_addition(self):
-        self.assertEqual(add(5,5),10)
-
 
     def test_verification_texte_dechiffre(self):
         resultat = verifier_texte_dechiffre("je talk !a mamamia:?")
@@ -43,7 +36,17 @@ class BetaTester(TestCase):
         self.assertEqual(resultat['ponctuation_valide'], 50.0)
 
     def test_calcul_entropie(self) -> None:
-        self.assertGreater(calculer_entropie("aaaaaaaa"), 0)
+        chaine_repetitive = b"aaaaaaaa"
+        chaine_aleatoire = b"aze15io!"
+        chaine_vide = b""
+        
+        entropie_chaine_repetitive = calculer_entropie(chaine_repetitive)
+        entropie_chaine_aleatoire = calculer_entropie(chaine_aleatoire)
+        entropie_chaine_vide = calculer_entropie(chaine_vide)
+        
+        self.assertGreater(entropie_chaine_repetitive, 0)
+        self.assertEqual(entropie_chaine_vide, 0)
+        self.assertGreater(entropie_chaine_aleatoire, entropie_chaine_repetitive)
 
 
 if __name__ == '__main__':
