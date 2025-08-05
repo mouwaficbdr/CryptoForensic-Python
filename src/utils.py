@@ -1,6 +1,5 @@
 import math
 import string
-import sys
 from pathlib import Path
 from typing import Any, Dict, List, TypedDict
 
@@ -44,7 +43,7 @@ def est_dechiffre(texte:str) -> bool:
         Returns: 
             bool: déchiffrée ou non
     """
-    stats:dict=verifier_texte_dechiffre(texte)
+    stats:dict[str, Any] = verifier_texte_dechiffre(texte)
     pourcent=0
     
     # Les caractères imprimables constituent 50% de la validation du déchiffrement
@@ -81,7 +80,7 @@ def verifier_texte_dechiffre(texte: str) -> Dict[str, Any]:
 
     #Statistiques sur le texte 
     
-    stats: dict = {
+    stats: dict[str, Any] = {
         'imprimable':0,
         'nombre_mots':0,
         'p_mots_valide':0,
@@ -137,8 +136,7 @@ def verifier_texte_dechiffre(texte: str) -> Dict[str, Any]:
             stats['p_mots_valide'] = 0.0
                     
     except Exception:
-        tb=sys.exception().__traceback__
-        raise Exception().with_traceback(tb)
+        raise
         
 
     #Verifier la structure de ponctuation.
