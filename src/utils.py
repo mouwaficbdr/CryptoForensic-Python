@@ -115,7 +115,7 @@ def verifier_texte_dechiffre(texte: str) -> Dict[str, Any]:
             
             for syl in ['Fr', 'En']:
 
-                chemin = Path(f"dico{syl}") / f"{first_char}.txt"
+                chemin = Path(f"dico{syl}")/f"{first_char}.txt"
                 try:
                     with open(chemin, 'r', encoding='latin-1') as f: 
                         for ligne in f:
