@@ -7,6 +7,9 @@ from typing import List, Union
 from .analyzers.aes_cbc_analyzer import Aes_Cbc_Analyzer
 from .crypto_analyzer import CryptoAnalyzer
 
+# Import de la classe abstraite
+from .analyzers.chacha20_analyzer import ChaCha20_Analyzer
+
 # Import des modules utilitaries
 from .utils import est_dechiffre
 
@@ -34,8 +37,9 @@ class DetecteurCryptoOrchestrateur:
         """
         Initialisation de tous les modules d'analyse disponibles (AES-CBC pour le moment)
         """
-        self.analyzers = {
+        self.analyzers: dict[str, CryptoAnalyzer] = {
             "AES-CBC": Aes_Cbc_Analyzer(),
+            "ChaCha20": ChaCha20_Analyzer(),
         }
         self.missions_completees: list[dict[str, Union[str, list[ResultatAnalyse], float]]]  = []
         self.statistiques_globales: dict[str, Union[int, float]] = {
