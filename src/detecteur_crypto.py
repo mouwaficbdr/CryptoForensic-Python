@@ -249,4 +249,3 @@ class DetecteurCryptoOrchestrateur:
             print(f"Erreur lors de l'attaque: {str(e)}")
             temps_execution = time.time() - debut_attaque
             return ResultatAnalyse("", b"", 0.0, b"", temps_execution, 0)
-
