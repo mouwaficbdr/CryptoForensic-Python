@@ -116,7 +116,7 @@ class DetecteurCryptoOrchestrateur:
         else:
             print("   Aucune clé valide trouvée")
 
-    def mission_complete_automatique(self, dossier_chiffres: str) -> List[ResultatAnalyse]:
+    def mission_complete_automatique(self, dossier_chiffres: str, chemin_dictionnaire: str) -> List[ResultatAnalyse]:
         """
         MISSION COMPLÈTE AUTOMATIQUE
         - Analyse des 5 fichiers séquentiellement
@@ -157,7 +157,7 @@ class DetecteurCryptoOrchestrateur:
                     print(f"\nTENTATIVE DE DÉCHIFFREMENT")
                     
                     analyzer = self.analyzers[resultat.algo]
-                    cles_candidates = analyzer.generer_cles_candidates("dicoEn")
+                    cles_candidates = analyzer.generer_cles_candidates(chemin_dictionnaire)
                     
                     if cles_candidates:
                         print(f"Test de {len(cles_candidates)} clés candidates...")
@@ -190,7 +190,7 @@ class DetecteurCryptoOrchestrateur:
             print(f"Erreur lors de la mission complète: {str(e)}")
             return []
 
-    def attaque_dictionnaire_manuelle(self, chemin_fichier: str, algorithme_choisi: str) -> ResultatAnalyse:
+    def attaque_dictionnaire_manuelle(self, chemin_fichier: str, algorithme_choisi: str, chemin_dictionnaire: str) -> ResultatAnalyse:
         """
             ATTAQUE PAR DICTIONNAIRE MANUELLE
         - Choix du fichier et de l'algorithme
@@ -207,7 +207,6 @@ class DetecteurCryptoOrchestrateur:
         
         
         debut_attaque = time.time()
-        dictionnaire = os.path.join("keys", "wordlist.txt")
         resultat = ResultatAnalyse("", b"", 0.0, b"", 0.0, 0)
         
         try:
@@ -228,7 +227,7 @@ class DetecteurCryptoOrchestrateur:
             
             # Génération des clés candidates
             print(f"Génération des clés candidates")
-            cles_candidates = analyzer.generer_cles_candidates(dictionnaire)
+            cles_candidates = analyzer.generer_cles_candidates(chemin_dictionnaire)
             print(f"{len(cles_candidates)} clés candidates générées")
             
             # Attaque par dictionnaire
