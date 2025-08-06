@@ -1,7 +1,7 @@
 # Import des modules
 import os
 import time
-from typing import List
+from typing import List, Union
 
 # Import des modules d'analyse
 from .analyzers.aes_cbc_analyzer import Aes_Cbc_Analyzer
@@ -37,8 +37,8 @@ class DetecteurCryptoOrchestrateur:
         self.analyzers = {
             "AES-CBC": Aes_Cbc_Analyzer(),
         }
-        self.missions_completees = []
-        self.statistiques_globales = {
+        self.missions_completees: list[dict[str, Union[str, list[ResultatAnalyse], float]]]  = []
+        self.statistiques_globales: dict[str, Union[int, float]] = {
             "total_fichiers": 0,
             "fichiers_dechiffres": 0,
             "temps_total": 0.0,
@@ -131,7 +131,7 @@ class DetecteurCryptoOrchestrateur:
         """
 
         debut_mission = time.time()
-        resultats = []
+        resultats: list[ResultatAnalyse] = []
         
         try:
             # Récupération des fichiers .enc
