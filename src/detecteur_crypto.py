@@ -5,6 +5,10 @@ from typing import List
 
 # Import des modules d'analyse
 from .analyzers.aes_cbc_analyzer import Aes_Cbc_Analyzer
+from .crypto_analyzer import CryptoAnalyzer
+
+# Import des modules utilitaries
+from .utils import est_dechiffre
 
 class ResultatAnalyse:
     """
@@ -28,7 +32,7 @@ class DetecteurCryptoOrchestrateur:
     
     def __init__(self):
         """
-        Initialisation de tous les modules d'analyse disponibles (AES-CBC) pour le moment
+        Initialisation de tous les modules d'analyse disponibles (AES-CBC pour le moment)
         """
         self.analyzers = {
             "AES-CBC": Aes_Cbc_Analyzer(),
@@ -83,7 +87,7 @@ class DetecteurCryptoOrchestrateur:
                     break
             
             if not algorithme_detecte:
-                print("Aucun algorithme coréctement détecté ")
+                print("Aucun algorithme correctement détecté ")
                 temps_execution = time.time() - debut_analyse
                 return ResultatAnalyse("", b"", 0.0, b"", temps_execution, nb_tentatives)
             
@@ -95,6 +99,22 @@ class DetecteurCryptoOrchestrateur:
             print(f"Erreur lors de l'analyse: {str(e)}")
             temps_execution = time.time() - debut_analyse
             return ResultatAnalyse("", b"", 0.0, b"", temps_execution, 0)
+    
+    def __tenter_dechiffrement_avec_dictionnaire(self, chemin_fichier: str, cles_candidates: list[bytes], analyzer: CryptoAnalyzer, resultat: ResultatAnalyse):
+        for j, cle in enumerate(cles_candidates):
+            resultat.nb_tentatives += 1
+                            
+            if j % 100 == 0:  # retour visuel tous les 100 essais
+                print(f"   Tentative {j+1}/{len(cles_candidates)}...")
+                            
+            texte_dechiffre = analyzer.dechiffrer(chemin_fichier, cle)
+            if texte_dechiffre and est_dechiffre(texte_dechiffre.decode('utf-8')) and len(texte_dechiffre) > 0:
+                resultat.cle = cle
+                resultat.texte_dechiffre = texte_dechiffre
+                print(f"   Clé trouvée après {j+1} tentatives!")
+                break
+        else:
+            print("   Aucune clé valide trouvée")
 
     def mission_complete_automatique(self, dossier_chiffres: str) -> List[ResultatAnalyse]:
         """
@@ -142,20 +162,7 @@ class DetecteurCryptoOrchestrateur:
                     if cles_candidates:
                         print(f"Test de {len(cles_candidates)} clés candidates...")
                         
-                        for j, cle in enumerate(cles_candidates):
-                            resultat.nb_tentatives += 1
-                            
-                            if j % 100 == 0:  # retour visuel tous les 100 essais
-                                print(f"   Tentative {j+1}/{len(cles_candidates)}...")
-                            
-                            texte_dechiffre = analyzer.dechiffrer(chemin_fichier, cle)
-                            if texte_dechiffre and len(texte_dechiffre) > 0:
-                                resultat.cle = cle
-                                resultat.texte_dechiffre = texte_dechiffre
-                                print(f"   Clé trouvée après {j+1} tentatives!")
-                                break
-                        else:
-                            print("   Aucune clé valide trouvée")
+                        self.__tenter_dechiffrement_avec_dictionnaire(chemin_fichier, cles_candidates, analyzer, resultat)
                     else:
                         print("   Aucune clé candidate générée")
                 
@@ -200,16 +207,20 @@ class DetecteurCryptoOrchestrateur:
         
         
         debut_attaque = time.time()
+        dictionnaire = os.path.join("keys", "wordlist.txt")
+        resultat = ResultatAnalyse("", b"", 0.0, b"", 0.0, 0)
         
         try:
             if algorithme_choisi not in self.analyzers:
                 print(f"Algorithme {algorithme_choisi} non disponible")
-                return ResultatAnalyse("", b"", 0.0, b"", 0.0, 0)
+                return resultat
             
             analyzer = self.analyzers[algorithme_choisi]
             
             # Vérification de l'algorithme
             score = analyzer.identifier_algo(chemin_fichier)
+            resultat.score_probabilite = score
+            resultat.algo = algorithme_choisi
             print(f"Score de confirmation: {score:.2f}")
             
             if score < 0.3:
@@ -217,32 +228,19 @@ class DetecteurCryptoOrchestrateur:
             
             # Génération des clés candidates
             print(f"Génération des clés candidates")
-            cles_candidates = analyzer.generer_cles_candidates("dicoEn")
+            cles_candidates = analyzer.generer_cles_candidates(dictionnaire)
             print(f"{len(cles_candidates)} clés candidates générées")
             
             # Attaque par dictionnaire
             
-            cle_trouvee = b""
-            texte_dechiffre = b""
-            nb_tentatives = 0
+            self.__tenter_dechiffrement_avec_dictionnaire(chemin_fichier, cles_candidates, analyzer, resultat)
             
-            for i, cle in enumerate(cles_candidates):
-                nb_tentatives += 1
-                
-                # retour visuel en temps réel
-                if i % 50 == 0:
-                    print(f"Tentative {i+1}/{len(cles_candidates)}... ({(i+1)/len(cles_candidates)*100:.1f}%)")
-                texte_dechiffre = analyzer.dechiffrer(chemin_fichier, cle)
-                if texte_dechiffre and len(texte_dechiffre) > 0:
-                    cle_trouvee = cle
-                    break
-            else:
-                print(f"Aucune clé valide trouvée après {len(cles_candidates)} tentatives")
             
             temps_execution = time.time() - debut_attaque
+            resultat.temps_execution = temps_execution
             print(f"Temps d'exécution: {temps_execution:.2f} secondes")
             
-            return ResultatAnalyse(algorithme_choisi, cle_trouvee, score, texte_dechiffre, temps_execution, nb_tentatives)
+            return resultat
             
         except Exception as e:
             print(f"Erreur lors de l'attaque: {str(e)}")
