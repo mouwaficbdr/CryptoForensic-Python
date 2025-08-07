@@ -250,3 +250,4 @@ class DetecteurCryptoOrchestrateur:
             temps_execution = time.time() - debut_attaque
             return ResultatAnalyse("", b"", 0.0, b"", temps_execution, 0)
 
+# print(DetecteurCryptoOrchestrateur().analyser_fichier_specifique('data/mission1.enc'))

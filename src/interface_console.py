@@ -7,6 +7,7 @@ from rich.prompt import Prompt
 from rich.table import Table
 # from detecteur_crypto import Analyser_fichier_uniquement
 # from detecteur_crypto import Analyser_fichier_sequentiels
+from .detecteur_crypto import DetecteurCryptoOrchestrateur
 import time, os
 
 install()
@@ -76,16 +77,18 @@ class consoleInterface:
     def menu_1(self):
         self.console.clear()
         self.dynamiqueText("Analyse d'un fichier spécifique","green")
-        self.dynamiqueText("Veuillez entrer le chemin du fichier :","white")
+        self.dynamiqueText("Veuillez entrer le chemin du fichier","yellow")
+        fichier = self.prompt.ask("")
         time.sleep(0.04)
         # chemin_fichier = self.prompt.ask("Veuillez entrer le chemin du fichier : ")
         # resultat = Analyser_fichier_uniquement(chemin_fichier)
         self.console.clear()
-        self.dynamiqueText("Analyse en cours...","green")
-        time.sleep(0.04)
-        self.console.clear()
+        # self.dynamiqueText("Analyse en cours...","green")
+        # time.sleep(0.04)
+        # self.console.clear()
         self.dynamiqueText("Analyse terminée","green")
-        time.sleep(0.04)
+        self.console.print(DetecteurCryptoOrchestrateur().analyser_fichier_specifique(fichier))
+        # time.sleep(0.04)
         # 
 
     def menu_2(self):
