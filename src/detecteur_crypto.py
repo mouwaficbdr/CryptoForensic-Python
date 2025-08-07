@@ -66,7 +66,7 @@ class DetecteurCryptoOrchestrateur:
         
         try:
             # Vérification de l'existence du fichier
-            if not os.path.exists(chemin_fichier_chiffre):
+            if not os.path.exists(f"data/{chemin_fichier_chiffre}"):
                 print("Erreur: Fichier non trouvé")
                 return ResultatAnalyse("", b"", 0.0, b"", 0.0, 0)
             
@@ -80,14 +80,14 @@ class DetecteurCryptoOrchestrateur:
             # Parcours des algorithmes disponibles
             scores_algorithmes = {}
             for nom_algo, analyzer in self.analyzers.items():
-                score = analyzer.identifier_algo(chemin_fichier_chiffre)
+                score = analyzer.identifier_algo(f"data/{chemin_fichier_chiffre}")
                 scores_algorithmes[nom_algo] = score
-                print(f"{nom_algo}: score {score:.2f}")
+                # print(f"{nom_algo}: score {score:.2f}")
                 
                 if score > 0.5:  # Seuil de confiance
                     algorithme_detecte = nom_algo
                     score_probabilite = score
-                    print(f"Algorithme détecté: {algorithme_detecte} (score: {score:.2f})")
+                    # print(f"Algorithme détecté: {algorithme_detecte} (score: {score:.2f})")
                     break
             
             if not algorithme_detecte:
