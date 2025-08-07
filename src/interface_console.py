@@ -7,7 +7,7 @@ from rich.prompt import Prompt
 from rich.table import Table
 # from detecteur_crypto import Analyser_fichier_uniquement
 # from detecteur_crypto import Analyser_fichier_sequentiels
-from detecteur_crypto import DetecteurCryptoOrchestrateur
+from .detecteur_crypto import DetecteurCryptoOrchestrateur
 import time, os
 
 install()
