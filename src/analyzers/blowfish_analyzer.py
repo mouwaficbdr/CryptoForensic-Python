@@ -172,3 +172,4 @@ class Blowfish_Analyzer(CryptoAnalyzer):
     except (FileNotFoundError):
       raise
     
+
