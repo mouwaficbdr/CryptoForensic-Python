@@ -1,7 +1,7 @@
 import hashlib
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from rich import print
-import os
+import os, struct
 
 class ChaCha20_Analyzer:
 
@@ -37,9 +37,10 @@ class ChaCha20_Analyzer:
         else: 
             try:
                 with open(f"data/{chemin_fichier_chiffer}",'rb') as f:
-                    nonce = f.read(12)
+                    nonce = f.read(16)
                     texte_chiffrer = f.read()
 
+                counter=0
                 algorithm_chacha20 = algorithms.ChaCha20(clef,nonce)
                 cipher = Cipher(algorithm_chacha20,mode=None)
                 decrypteur = cipher.decryptor()
@@ -51,20 +52,4 @@ class ChaCha20_Analyzer:
                 print(f"Une erreur est survenu : {e}")
 
 
-key=os.urandom(32)
-nonce =os.urandom(16)
-message = b"Ceci est un test"
-algo = algorithms.ChaCha20(key,nonce)
-cipher = Cipher(algo,mode=None)
-encryptor = cipher.encryptor()
-ct = encryptor.update(message)
-
-print(ct)
-
-decryptor = cipher.decryptor()
-dt = encryptor.update(ct)
-
-print(dt)
-
-# ChaCha20_Analyzer().dechiffrer("mission2.enc",)
-
+# print(ChaCha20_Analyzer().dechiffrer("mission2.enc",os.urandom(32)))
