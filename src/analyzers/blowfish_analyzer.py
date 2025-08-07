@@ -1,5 +1,6 @@
 from ..detecteur_crypto import CryptoAnalyzer
 from ..utils import calculer_entropie
+import hashlib
 
 class Blowfish_Analyzer(CryptoAnalyzer):
   '''Détermine si l'algo blowfish est utilisé, génère des clés et tente de de déchffrer un fichier chiffré en utilisant les clés générées.
@@ -60,3 +61,67 @@ class Blowfish_Analyzer(CryptoAnalyzer):
       return 0.0    
     
     return score
+
+
+  def __filtrer_dictionnaire_par_indice(self, chemin_dictionnaire: str) -> list[str]:
+    """
+    Filtre le dictionnaire en se basant sur les indices de la mission 3.
+    L'indice pointe vers un format de clé "sha + nombre + chiffres simples".
+    
+    Args:
+      chemin_dictionnaire(str): Le chemin vers le fichier de dictionnaire.
+    
+    Returns:
+      list[str]: Une liste de mots de passe filtrés.
+    """
+    mots_filtres: list[str] = []
+    
+    # Indices pour le préfixe et le suffixe
+    prefixes = ("sha256", "sha384", "sha512", "sha1") 
+    suffixes = ("123", "456", "789")
+    
+    try:
+      with open(chemin_dictionnaire, "r", encoding="utf-8") as f:
+        for ligne in f:
+          mot = ligne.strip()
+          
+          # Vérifie si le mot commence par un préfixe et se termine par un suffixe
+          if mot.startswith(prefixes) and mot.endswith(suffixes):
+            mots_filtres.append(mot)
+            
+    except FileNotFoundError:
+      print(f"Erreur : Le fichier de dictionnaire '{chemin_dictionnaire}' est introuvable.")
+      return []
+    
+    return mots_filtres
+
+  def generer_cles_candidates(self, chemin_dictionnaire: str) -> list[bytes]:
+          """
+          Génère une liste de clés candidates pour le déchiffrement.
+          Les candidats incluent les mots de passe directs, leur hash MD5 et leur hash SHA1.
+          
+          Args:
+              chemin_dictionnaire(str): Le chemin vers le fichier de dictionnaire.
+          
+          Returns:
+              list[bytes]: Une liste des clés candidates sous forme d'octets.
+          """
+          cles_candidates: list[bytes] = []
+          # Utilisation de la méthode privée pour filtrer les mots
+          mots_de_passe_cible = self.__filtrer_dictionnaire_par_indice(chemin_dictionnaire)
+          
+          for mot in mots_de_passe_cible:
+              mot_en_bytes = mot.encode("utf-8")
+              
+              # 1. Ajouter le mot de passe direct comme clé candidate
+              cles_candidates.append(mot_en_bytes)
+              
+              # 2. Hachage MD5 et ajout à la liste (en bytes)
+              hash_md5 = hashlib.md5(mot_en_bytes).digest()
+              cles_candidates.append(hash_md5)
+              
+              # 3. Hachage SHA1 et ajout à la liste (en bytes)
+              hash_sha1 = hashlib.sha1(mot_en_bytes).digest()
+              cles_candidates.append(hash_sha1)
+          
+          return cles_candidates
