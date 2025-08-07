@@ -45,9 +45,6 @@ class ChaCha20_Analyzer:
                 cipher = Cipher(algorithm_chacha20,mode=None)
                 decrypteur = cipher.decryptor()
                 return decrypteur.update(texte_chiffrer)
-                
-                
-
             except Exception as e:
                 print(f"Une erreur est survenu : {e}")
 

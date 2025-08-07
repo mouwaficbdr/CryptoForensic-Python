@@ -4,14 +4,14 @@ import time
 from typing import List, Union
 
 # Import des modules d'analyse
-from .analyzers.aes_cbc_analyzer import Aes_Cbc_Analyzer
-from .crypto_analyzer import CryptoAnalyzer
+from analyzers.aes_cbc_analyzer import Aes_Cbc_Analyzer
+from crypto_analyzer import CryptoAnalyzer
 
 # Import de la classe abstraite
-from .analyzers.chacha20_analyzer import ChaCha20_Analyzer
+from analyzers.chacha20_analyzer import ChaCha20_Analyzer
 
 # Import des modules utilitaries
-from .utils import est_dechiffre
+from utils import est_dechiffre
 
 class ResultatAnalyse:
     """
@@ -250,3 +250,4 @@ class DetecteurCryptoOrchestrateur:
             temps_execution = time.time() - debut_attaque
             return ResultatAnalyse("", b"", 0.0, b"", temps_execution, 0)
 
+print(DetecteurCryptoOrchestrateur().analyser_fichier_specifique(f"{os.path.abspath(os.curdir)}\\CryptoForensic-Python\\data\\mission2.enc"))
