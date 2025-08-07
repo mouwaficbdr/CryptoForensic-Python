@@ -6,9 +6,8 @@ from typing import List, Union
 # Import des modules d'analyse
 from analyzers.aes_cbc_analyzer import Aes_Cbc_Analyzer
 from crypto_analyzer import CryptoAnalyzer
-
-# Import de la classe abstraite
 from analyzers.chacha20_analyzer import ChaCha20_Analyzer
+from analyzers.blowfish_analyzer import Blowfish_Analyzer
 
 # Import des modules utilitaries
 from utils import est_dechiffre
@@ -35,11 +34,12 @@ class DetecteurCryptoOrchestrateur:
     
     def __init__(self):
         """
-        Initialisation de tous les modules d'analyse disponibles (AES-CBC pour le moment)
+        Initialisation de tous les modules d'analyse disponibles 
         """
         self.analyzers: dict[str, CryptoAnalyzer] = {
             "AES-CBC": Aes_Cbc_Analyzer(),
             "ChaCha20": ChaCha20_Analyzer(),
+            "Blowfish": Blowfish_Analyzer()
         }
         self.missions_completees: list[dict[str, Union[str, list[ResultatAnalyse], float]]]  = []
         self.statistiques_globales: dict[str, Union[int, float]] = {
@@ -118,7 +118,7 @@ class DetecteurCryptoOrchestrateur:
                 print(f"   Clé trouvée après {j+1} tentatives!")
                 break
         else:
-            print("   Aucune clé valide trouvée")
+            print("Aucune clé valide trouvée")
 
     def mission_complete_automatique(self, dossier_chiffres: str, chemin_dictionnaire: str) -> List[ResultatAnalyse]:
         """

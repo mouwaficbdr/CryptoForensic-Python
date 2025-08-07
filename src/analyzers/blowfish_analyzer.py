@@ -12,9 +12,14 @@ class Blowfish_Analyzer(CryptoAnalyzer):
     - dechiffrer: fait le déchiffrement proprement dit sur la base de la liste des clés générées
     
     Attributes:
-    
+    __BLOWFISH_TAILLE_BLOC : taille à considérer pour les blocs de données chiffrés que le PKCS7 doit prendre en compte (8 bits)
+    __BLOWFISH_TAILLE_IV : taille du vecteur d'initialisation en début de fichier (8 bits)
 
   '''
+  
+  __BLOWFISH_TAILLE_BLOC = 8
+  __BLOWFISH_TAILLE_IV = 8
+  
   def identifier_algo(self, chemin_fichier_chiffre: str) -> float:
     '''
       Détermine la probabilité que l'algo de chiffrement utilisé soit blowfish en:
@@ -151,7 +156,7 @@ class Blowfish_Analyzer(CryptoAnalyzer):
 
       #Récupération de l'IV et des texte chiffré das le fichier
       with open(chemin_fichier_chiffre, 'rb') as f:
-        initialization_vector = f.read(8)
+        initialization_vector = f.read(self.__BLOWFISH_TAILLE_IV)
         texte_chiffre = f.read()
       f.close()
       
@@ -160,7 +165,7 @@ class Blowfish_Analyzer(CryptoAnalyzer):
       decrypteur = cipher.decryptor()
 
       #Suppresseur de padding
-      supresseur_padding = PKCS7(8).unpadder()
+      supresseur_padding = PKCS7(self.__BLOWFISH_TAILLE_BLOC).unpadder()
       
       #Décriptage des données avec le padding(remplissage aléatoire)
       donnees_chiffrees_avec_padding = decrypteur.update(texte_chiffre) + decrypteur.finalize()
