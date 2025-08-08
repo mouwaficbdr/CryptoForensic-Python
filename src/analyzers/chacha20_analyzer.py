@@ -145,7 +145,7 @@ class ChaCha20_Analyzer(CryptoAnalyzer):
                 with open(fichier_path, 'rb') as f:
                     nonce = f.read(self._CHACHA20_LONGUEUR_NONCE)
                     texte_chiffre = f.read()
-
+                
                 algorithm_chacha20 = algorithms.ChaCha20(cle_donnee, nonce)
                 cipher = Cipher(algorithm_chacha20, mode=None)
                 decrypteur = cipher.decryptor()

@@ -132,7 +132,7 @@ class Blowfish_Analyzer(CryptoAnalyzer):
     
     return cles_candidates
     
-  def dechiffrer(self, chemin_fichier_chiffre: str, cle_donnee: bytes):
+  def dechiffrer(self, chemin_fichier_chiffre: str, cle_donnee: bytes) -> bytes:
     """
     Déchiffre le fichier supposé crypté par l'algorithme blowfish avec la clé donnée en respectant les critères de 
       - récupération de l'IV
