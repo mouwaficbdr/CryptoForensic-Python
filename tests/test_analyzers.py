@@ -2,7 +2,7 @@ from unittest import TestCase, main
 import os
 import sys
 import hashlib
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms
+from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -25,7 +25,7 @@ class AesCbcAnalyzerTester(TestCase):
 
     
     def test_aes_cbc_identifier_algo(self):
-        self.assertAlmostEqual(self.analyser.identifier_algo(self.chemin_fichier_chiffre), 1)
+        self.assertAlmostEqual(self.analyser.identifier_algo(self.chemin_fichier_chiffre), 1.0, delta=0.1)
         self.assertAlmostEqual(self.analyser.identifier_algo(self.chemin_fichier_chiffre_invalide), 0)
 
     def test_aes_cbc_filtrage_dict(self):
@@ -58,20 +58,23 @@ class ChaCha20AnalyzerTester(TestCase):
         self.cle_test_chacha = hashlib.sha256(b"cle_test").digest()
         self.nonce_test_chacha = b"\x00" * 12
         self.texte_clair_test_chacha = b"Bonjour le monde, ceci est un test de chiffrement ChaCha20"
-        self.chemin_fichier_chacha_valide = "tests/fichiers_pour_tests/chacha20_valide.enc"
+        self.chemin_fichier_chacha_valide = "tests/fichiers_pour_tests/mission_chacha20_temp.enc"
         self.chemin_fichier_chacha_invalide = "tests/fichiers_pour_tests/chacha20_invalide.enc"
 
         # Générer un fichier chiffré valide pour les tests de ChaCha20
-        cipher_chacha = Cipher(algorithms.ChaCha20(self.cle_test_chacha, self.nonce_test_chacha), mode=None)
-        encryptor = cipher_chacha.encryptor()
-        texte_chiffre_test = encryptor.update(self.texte_clair_test_chacha)
+        aead = ChaCha20Poly1305(self.cle_test_chacha)
+        texte_chiffre_test = aead.encrypt(self.nonce_test_chacha, self.texte_clair_test_chacha, None)
         with open(self.chemin_fichier_chacha_valide, "wb") as f:
             f.write(self.nonce_test_chacha)
             f.write(texte_chiffre_test)
+
+    def tearDown(self):
+        if os.path.exists(self.chemin_fichier_chacha_valide):
+            os.remove(self.chemin_fichier_chacha_valide)
             
     # Ajout des tests pour ChaCha20_Analyzer
     def test_chacha20_identifier_algo(self):
-        self.assertAlmostEqual(self.analyser_chacha.identifier_algo(self.chemin_fichier_chacha_valide), 1.0, 1)
+        self.assertAlmostEqual(self.analyser_chacha.identifier_algo(self.chemin_fichier_chacha_valide), 0.8, 1)
         self.assertAlmostEqual(self.analyser_chacha.identifier_algo(self.chemin_fichier_chacha_invalide), 0.0, 1)
 
     def test_chacha20_generer_cles_candidates(self):

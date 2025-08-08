@@ -1,6 +1,7 @@
 # Import des modules
 import hashlib
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms
+from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
+from cryptography.exceptions import InvalidTag
 from rich import print
 import os
 import sys
@@ -109,27 +110,24 @@ class ChaCha20_Analyzer(CryptoAnalyzer):
         return cles_candidates
     
     def dechiffrer(self, chemin_fichier_chiffre: str, cle_donnee: bytes) -> bytes:
-        if len(cle_donnee) != 32: 
+        if len(cle_donnee) != self._CHACHA20_LONGUEUR_CLE:
             raise ValueError("Erreur : La clé n'a pas la taille correcte")
         
         try:
-            fichier_path: str = chemin_fichier_chiffre
-            if not os.path.isabs(chemin_fichier_chiffre):
-                fichier_path = f"data/{chemin_fichier_chiffre}"
-            
-            with open(fichier_path, 'rb') as f:
+            with open(chemin_fichier_chiffre, 'rb') as f:
                 nonce: bytes = f.read(self._CHACHA20_LONGUEUR_NONCE)
                 texte_chiffre: bytes = f.read()
 
-            algorithm_chacha20 = algorithms.ChaCha20(cle_donnee, nonce)
-            cipher = Cipher(algorithm_chacha20, mode=None)
-            decrypteur = cipher.decryptor()
-            resultat: bytes = decrypteur.update(texte_chiffre)
+            aead = ChaCha20Poly1305(cle_donnee)
+            resultat: bytes = aead.decrypt(nonce, texte_chiffre, None)
             
             return resultat
 
-        except Exception as e:
-            print(f"Une erreur est survenue : {e}")
+        except FileNotFoundError:
+            raise
+        except InvalidTag:
+            return b""
+        except Exception:
             return b""
 
 # L'appel direct a été déplacé dans un bloc if __name__ == "__main__" pour de bonnes pratiques (Mouwafic)
