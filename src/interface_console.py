@@ -5,8 +5,10 @@ from rich import print
 from rich.text import Text
 from rich.prompt import Prompt
 from rich.table import Table
+from pathlib import Path
 # from detecteur_crypto import Analyser_fichier_uniquement
 # from detecteur_crypto import Analyser_fichier_sequentiels
+from .detecteur_crypto import DetecteurCryptoOrchestrateur
 import time, os
 
 install()
@@ -34,7 +36,7 @@ class consoleInterface:
 
         for char in text:
             self.console.print(f"[{color}]{char}[/{color}]",end='')
-            time.sleep(0.04)
+            time.sleep(0.02)
         self.console.print('\n')
 
         
@@ -43,7 +45,7 @@ class consoleInterface:
         self.console.clear()
         self.dynamiqueText("😈​ Bienvenue sur Forensic je suis Crypto votre assitant IA minimaliste 🤖​ ","green")
         self.dynamiqueText("En quoi puis-je vous aider ? :","white")
-        time.sleep(0.04)
+        time.sleep(0.02)
         menuTag = Markdown("# Menu",style="blue")
         menuOption = Markdown("1. #### Analyse d'un fichier spécifique \n" \
                               "2. #### Mission complète automatique \n" \
@@ -52,9 +54,9 @@ class consoleInterface:
                               "5. #### Système d'aide intégré \n" \
                               "6. #### Quitter")
         self.console.print(menuTag,menuOption)
-        time.sleep(0.04)
+        time.sleep(0.02)
 
-        choix = self.prompt.ask("Veuillez choisir une option ",choices=["1","2","3","4","5","6"])
+        choix = self.prompt.ask("Veuillez choisir une option ", choices=["1","2","3","4","5","6"])
         try:    
             if choix == "1":
                 self.menu_1()
@@ -76,51 +78,71 @@ class consoleInterface:
     def menu_1(self):
         self.console.clear()
         self.dynamiqueText("Analyse d'un fichier spécifique","green")
-        self.dynamiqueText("Veuillez entrer le chemin du fichier :","white")
-        time.sleep(0.04)
+        self.dynamiqueText("Veuillez entrer le chemin du fichier","yellow")
+        fichier = self.prompt.ask("")
+        time.sleep(0.02)
         # chemin_fichier = self.prompt.ask("Veuillez entrer le chemin du fichier : ")
         # resultat = Analyser_fichier_uniquement(chemin_fichier)
-        self.console.clear()
-        self.dynamiqueText("Analyse en cours...","green")
-        time.sleep(0.04)
-        self.console.clear()
+        # self.console.clear()
+        # self.dynamiqueText("Analyse en cours...","green")
+        # time.sleep(0.02)
+        # self.console.clear()
         self.dynamiqueText("Analyse terminée","green")
-        time.sleep(0.04)
+        data = DetecteurCryptoOrchestrateur().analyser_fichier_specifique(fichier)
+        print(f"\n[bold]Algorithme détecté[/bold] : [yellow]{data.algo}[/yellow]")
+        # print(data.cle)
+        print(f"\n[bold]Score de probabilité[/bold] : [green]{data.score_probabilite}[/green]")
+        # print(data.texte_dechiffre)
+        print(f"\n[bold]Temps d'éxécution[/bold] : [green]{round(data.temps_execution,4)}[/green] s")
+        esc=input("Veuillez appuyer sur la touche entrer pour retrouner au menu principal")
+        if esc=="":
+            self.default_menu()
+        else : self.default_menu()
+        # print(data.nb_tentatives)
+        # time.sleep(0.02)
         # 
 
     def menu_2(self):
         self.console.clear()
         self.dynamiqueText("Mission complète automatique","green")
         self.dynamiqueText("Veuillez entrer le chemin du dossier :","white")
-        time.sleep(0.04)
+        time.sleep(0.02)
         # chemin_dossier = self.prompt.ask("Veuillez entrer le chemin du dossier : ")
         self.console.clear()
         self.dynamiqueText("Mission en cours...","green")
-        time.sleep(0.04)
+        time.sleep(0.02)
         self.console.clear()
         self.dynamiqueText("Mission terminée","green")
-        time.sleep(0.04)
+        time.sleep(0.02)
         self.default_menu()
 
     def menu_3(self):
         self.console.clear()
         self.dynamiqueText("Attaque par dictionnaire manuelle","green")
         self.dynamiqueText("Veuillez entrer le chemin du fichier :","white")
-        time.sleep(0.04)
+        time.sleep(0.02)
         # chemin_fichier = self.prompt.ask("Veuillez entrer le chemin du fichier : ")
         self.console.clear()
         self.dynamiqueText("Attaque en cours...","green")
-        time.sleep(0.04)
+        time.sleep(0.02)
         self.console.clear()
         self.dynamiqueText("Attaque terminée","green")
-        time.sleep(0.04)
+        time.sleep(0.02)
         self.default_menu()
 
     def menu_4(self):
         self.console.clear()
         self.dynamiqueText("Affichage des rapports","green")
-        time.sleep(0.04)
-        self.default_menu()
+        time.sleep(0.02)
+        f = open("rapport_mission.txt",'r')
+        rapports = f.read()
+        for rapport in rapports:
+            print(f"\n{rapport}")
+        f.close()
+        esc = input('Veuillez appuyez sur la touche entrer pour continuer')
+        if esc=='': 
+            self.default_menu()
+        else: self.default_menu()
 
     def menu_5(self):
         self.console.clear()
@@ -142,7 +164,8 @@ class consoleInterface:
         mission_table.add_row("AES-256-GCM","mission4.enc","Acronyme d'une organisation internationale + année courante","Identifier le mode authentifié GCM et gérer l'authentification")
         mission_table.add_row("Fernet","mission5.enc","Phrase française simple encodée, liée à notre domaine d'étude","Reconnaître le format Fernet et sa structure particulière")
 
-        f = open("guideUtilisation.txt",'r')
+        chemin = Path().cwd()/'guideUtilisation.txt'
+        f = open(chemin,'r')
         algo_docs = Markdown(f.read())
         f.close()
 
@@ -172,7 +195,7 @@ class consoleInterface:
 
         for guide in guides:
             print(guide)
-            print("\n")
+            print("\n") 
 
         escape= input('')
         if escape != None:

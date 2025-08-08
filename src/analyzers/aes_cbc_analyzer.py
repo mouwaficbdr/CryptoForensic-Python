@@ -50,16 +50,14 @@ class Aes_Cbc_Analyzer(CryptoAnalyzer):
         donnees_chiffres = contenu_fichier[16:]
         
         if len(donnees_chiffres) % 16 == 0: #Heuristique taille multipe de 16 bytes (Vérifie si les donnéese chiffrés sont en bloc de 16 octets, caractéristique de l'aes cbc)
-          probabilite = 0.6
+          probabilite = 0.5
         else:
-          return 0.0
+          probabilite = 0.0
         
         entropie = calculer_entropie(donnees_chiffres)
         
         if entropie > 7.5: #Heuristique entropie élevée (L'entropie doit être supérieur à 7.5 pour confirmer le chiffrement robuste caractéristique des algos de chiffrement)
-          probabilite += 0.4
-        else:
-          return 0.0
+          probabilite += 0.5
         
     except FileNotFoundError:
       return 0.0
