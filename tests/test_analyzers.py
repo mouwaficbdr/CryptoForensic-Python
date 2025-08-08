@@ -9,6 +9,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
 
 from src.analyzers.aes_cbc_analyzer import Aes_Cbc_Analyzer
 from src.analyzers.chacha20_analyzer import ChaCha20_Analyzer
+from src.analyzers.blowfish_analyzer import Blowfish_Analyzer
 
 
 class AesCbcAnalyzerTester(TestCase):
@@ -103,7 +104,23 @@ class ChaCha20AnalyzerTester(TestCase):
         cle_valide = self.cle_test_chacha
         with self.assertRaises(FileNotFoundError):
             self.analyser_chacha.dechiffrer("chemin_invalide.enc", cle_valide)
-            
+
+
+class BlowfishAnalyzerTester(TestCase):
+    
+    """
+        Cette classe contient les différents tests éffectués sur les méthodes en rapport avec l'analyzer Blowfish
+    """
+
+    def setUp(self):
+        self.fichier_crypte_invalide = "./tests/fichiers_pour_tests/mission3_invalide.enc"
+        
+        self.analyzer = Blowfish_Analyzer()
+
+    def test_identifier_algo(self):
+        self.assertAlmostEqual(self.analyzer.identifier_algo(self.fichier_crypte_invalide), 0)
+        self.assertAlmostEqual(self.analyzer.identifier_algo())
+
             
 if __name__ == '__main__':
     main()
