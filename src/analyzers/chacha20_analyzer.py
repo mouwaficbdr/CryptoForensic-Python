@@ -174,12 +174,9 @@ class ChaCha20_Analyzer(CryptoAnalyzer):
                 cipher = Cipher(algorithm_chacha20,mode=None)
                 decrypteur = cipher.decryptor()
                 return decrypteur.update(texte_chiffrer)
-                
-                
-
             except Exception as e:
                 print(f"Une erreur est survenu : {e}")
 
 
 
-# print(ChaCha20_Analyzer().dechiffrer("mission2.enc",os.urandom(32)))
+print(ChaCha20_Analyzer().dechiffrer("mission2.enc",os.urandom(32)))

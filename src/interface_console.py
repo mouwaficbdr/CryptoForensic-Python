@@ -5,6 +5,7 @@ from rich import print
 from rich.text import Text
 from rich.prompt import Prompt
 from rich.table import Table
+from pathlib import Path
 # from detecteur_crypto import Analyser_fichier_uniquement
 # from detecteur_crypto import Analyser_fichier_sequentiels
 from .detecteur_crypto import DetecteurCryptoOrchestrateur
@@ -55,7 +56,7 @@ class consoleInterface:
         self.console.print(menuTag,menuOption)
         time.sleep(0.02)
 
-        choix = self.prompt.ask("Veuillez choisir une option ",choices=["1","2","3","4","5","6"])
+        choix = self.prompt.ask("Veuillez choisir une option ", choices=["1","2","3","4","5","6"])
         try:    
             if choix == "1":
                 self.menu_1()
@@ -163,7 +164,8 @@ class consoleInterface:
         mission_table.add_row("AES-256-GCM","mission4.enc","Acronyme d'une organisation internationale + année courante","Identifier le mode authentifié GCM et gérer l'authentification")
         mission_table.add_row("Fernet","mission5.enc","Phrase française simple encodée, liée à notre domaine d'étude","Reconnaître le format Fernet et sa structure particulière")
 
-        f = open("guideUtilisation.txt",'r')
+        chemin = Path().cwd()/'guideUtilisation.txt'
+        f = open(chemin,'r')
         algo_docs = Markdown(f.read())
         f.close()
 
@@ -193,7 +195,7 @@ class consoleInterface:
 
         for guide in guides:
             print(guide)
-            print("\n")
+            print("\n") 
 
         escape= input('')
         if escape != None:
