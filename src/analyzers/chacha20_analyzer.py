@@ -1,9 +1,8 @@
 # Import des modules
 import hashlib
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms
 from rich import print
-import os, struct
-import math
+import os
 import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from crypto_analyzer import CryptoAnalyzer
