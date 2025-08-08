@@ -10,7 +10,7 @@ class Aes_Cbc_Analyzer(CryptoAnalyzer):
   
     Cette classe a trois méthodes:
     - identifier_algo: Détermine si l'algo de chiffrement utilsé sur le fichier chiffré qui lui est passé en paramètre est l'aes_cbc.
-     - generer_cles_candidates: Génère une liste de clés candidates pour le déchiffrement du fichier chiffré
+    - generer_cles_candidates: Génère une liste de clés candidates pour le déchiffrement du fichier chiffré
     - dechiffrer: fait le déchiffrement proprement dit sur la base de la liste des clés générées
     
     Attributes:

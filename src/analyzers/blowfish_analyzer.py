@@ -132,7 +132,7 @@ class Blowfish_Analyzer(CryptoAnalyzer):
     
     return cles_candidates
     
-  def dechiffrer(self, chemin_fichier_chiffre: str, cle_donnee: bytes):
+  def dechiffrer(self, chemin_fichier_chiffre: str, cle_donnee: bytes) -> bytes:
     """
     Déchiffre le fichier supposé crypté par l'algorithme blowfish avec la clé donnée en respectant les critères de 
       - récupération de l'IV
@@ -147,8 +147,8 @@ class Blowfish_Analyzer(CryptoAnalyzer):
     
     #La taille de clé est dans l'intervalle 32-448bits et est multiple de 8
     if len(cle_donnee) not in range(32, 448, 8):
-      return ValueError('Taille de clé invalide.')
-     
+      raise ValueError('Taille de clé invalide.')
+    
     try:
       
       algorithm_blowfish = algorithms.Blowfish(cle_donnee)
@@ -174,7 +174,7 @@ class Blowfish_Analyzer(CryptoAnalyzer):
       donnees_originales = supresseur_padding.update(donnees_chiffrees_avec_padding) + supresseur_padding.finalize() 
       return donnees_originales
       
-    except (FileNotFoundError):
+    except FileNotFoundError:
       raise
     
 
