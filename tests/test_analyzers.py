@@ -3,6 +3,8 @@ import os
 import sys
 import hashlib
 from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
+from Crypto.Cipher import Blowfish
+from struct import pack
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -113,14 +115,39 @@ class BlowfishAnalyzerTester(TestCase):
     """
 
     def setUp(self):
-        self.fichier_crypte_invalide = "./tests/fichiers_pour_tests/mission3_invalide.enc"
-        
+        # Initialisation de la classe Blowfish_Analyzer pour les tests des méthodes de cette dernière
         self.analyzer = Blowfish_Analyzer()
+        # Fichier invalide pour les tests d'exceptions et de résultat d'erreur
+        self.fichier_crypte_invalide = "tests/fichiers_pour_tests/mission3_invalide.enc"
+        self.fichier_crypte_valide = "tests/fichiers_pour_tests/mission3_valide.enc"
+        self.fichier_dictionnaire = "./keys/wordlist.txt"
+        self.key = b'This is 2 blowfish algorithm key'
+        self.mot_a_trouver = b'zertyuiopqsdfghjklmwxcvbn,;&1234567890iubdo,cap!=)"_'
 
     def test_identifier_algo(self):
-        self.assertAlmostEqual(self.analyzer.identifier_algo(self.fichier_crypte_invalide), 0)
-        self.assertAlmostEqual(self.analyzer.identifier_algo())
+        self.assertAlmostEqual(self.analyzer.identifier_algo(self.fichier_crypte_invalide), 0.0)
+        self.assertAlmostEqual(self.analyzer.identifier_algo(self.fichier_crypte_valide), 0.7)
 
-            
+    def test_generer_cles_candidates(self):
+        # Dans ce cas, on a un dictionnaire qui contient des valeurs qui ne cadrent pas
+        # avec notre fichier de test, donc la génération renverra une liste vide 
+        self.assertNotEqual(self.analyzer.generer_cles_candidates(self.fichier_dictionnaire), [])
+
+    def test_dechiffrer_taille_cle_invalide(self):
+        # On tente de lever l'exception ValueError en renseignant une clé ne respectant
+        # l'intervalle pour la taille requise
+        invalide_key = b'\x00'
+        with self.assertRaises(ValueError):
+            self.analyzer.dechiffrer(self.fichier_crypte_valide, invalide_key)
+
+    def test_dechiffrer_fichier_introuvable(self):
+        # Vérification de l'exception FileNotFoundError
+        with self.assertRaises(FileNotFoundError):
+            self.analyzer.dechiffrer('dohi.txt', self.key)
+
+    # def test_dechiffrer_fichier(self):
+    #     # Cas où la valeur de sortie ne correspond à celle attendue
+    #     self.assertNotEqual(self.analyzer.dechiffrer(self.fichier_crypte_valide, self.key), b'Dohi 1 fois')
+        
 if __name__ == '__main__':
     main()

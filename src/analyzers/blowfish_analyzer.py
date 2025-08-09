@@ -1,8 +1,11 @@
-from ..detecteur_crypto import CryptoAnalyzer
+import sys
+import os
 from ..utils import calculer_entropie
 import hashlib
+from src.crypto_analyzer import CryptoAnalyzer
 from cryptography.hazmat.primitives.ciphers import algorithms, Cipher, modes
 from cryptography.hazmat.primitives.padding import PKCS7
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 class Blowfish_Analyzer(CryptoAnalyzer):
   '''Détermine si l'algo blowfish est utilisé, génère des clés et tente de de déchffrer un fichier chiffré en utilisant les clés générées.
   
@@ -47,9 +50,10 @@ class Blowfish_Analyzer(CryptoAnalyzer):
           score += 0.4
           
           donnees_chiffrees = contenu_fichier[TAILLE_IV:]
-          
+
           # Heuristique 2 : Vérification de l'entropie globale
           entropie_globale = calculer_entropie(donnees_chiffrees)
+          print(entropie_globale)
           if entropie_globale > 7.5:
             score += 0.3
             
@@ -62,6 +66,8 @@ class Blowfish_Analyzer(CryptoAnalyzer):
             
             if entropie_moitie1 > 7.5 and entropie_moitie2 > 7.5:
               score += 0.3
+          else:
+            print(score)
               
     except FileNotFoundError:
       return 0.0    
@@ -115,7 +121,9 @@ class Blowfish_Analyzer(CryptoAnalyzer):
     cles_candidates: list[bytes] = []
     # Utilisation de la méthode privée pour filtrer les mots
     mots_de_passe_cible = self.__filtrer_dictionnaire_par_indice(chemin_dictionnaire)
-    
+
+
+
     for mot in mots_de_passe_cible:
         mot_en_bytes = mot.encode("utf-8")
         
@@ -154,7 +162,7 @@ class Blowfish_Analyzer(CryptoAnalyzer):
       algorithm_blowfish = algorithms.Blowfish(cle_donnee)
       texte_chiffre = ''
 
-      #Récupération de l'IV et des texte chiffré das le fichier
+      #Récupération de l'IV et des texte chiffré dans le fichier
       with open(chemin_fichier_chiffre, 'rb') as f:
         initialization_vector = f.read(self.__BLOWFISH_TAILLE_IV)
         texte_chiffre = f.read()

@@ -187,4 +187,4 @@ def rangerDico() -> None:
         print(compte)   
     except FileNotFoundError: 
         print('Fichier non trouvé.')
-# rangerDico()         
+# rangerDico()
