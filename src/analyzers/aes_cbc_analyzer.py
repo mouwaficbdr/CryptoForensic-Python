@@ -1,5 +1,5 @@
-from crypto_analyzer import CryptoAnalyzer
-from utils import calculer_entropie
+from ..crypto_analyzer import CryptoAnalyzer
+from ..utils import calculer_entropie
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
@@ -10,7 +10,7 @@ class Aes_Cbc_Analyzer(CryptoAnalyzer):
   
     Cette classe a trois méthodes:
     - identifier_algo: Détermine si l'algo de chiffrement utilsé sur le fichier chiffré qui lui est passé en paramètre est l'aes_cbc.
-     - generer_cles_candidates: Génère une liste de clés candidates pour le déchiffrement du fichier chiffré
+    - generer_cles_candidates: Génère une liste de clés candidates pour le déchiffrement du fichier chiffré
     - dechiffrer: fait le déchiffrement proprement dit sur la base de la liste des clés générées
     
     Attributes:
@@ -50,16 +50,14 @@ class Aes_Cbc_Analyzer(CryptoAnalyzer):
         donnees_chiffres = contenu_fichier[16:]
         
         if len(donnees_chiffres) % 16 == 0: #Heuristique taille multipe de 16 bytes (Vérifie si les donnéese chiffrés sont en bloc de 16 octets, caractéristique de l'aes cbc)
-          probabilite = 0.6
+          probabilite = 0.5
         else:
-          return 0.0
+          probabilite = 0.0
         
         entropie = calculer_entropie(donnees_chiffres)
         
         if entropie > 7.5: #Heuristique entropie élevée (L'entropie doit être supérieur à 7.5 pour confirmer le chiffrement robuste caractéristique des algos de chiffrement)
-          probabilite += 0.4
-        else:
-          return 0.0
+          probabilite += 0.5
         
     except FileNotFoundError:
       return 0.0
