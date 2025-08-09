@@ -8,6 +8,7 @@ from analyzers.aes_cbc_analyzer import Aes_Cbc_Analyzer
 from crypto_analyzer import CryptoAnalyzer
 from analyzers.chacha20_analyzer import ChaCha20_Analyzer
 from analyzers.blowfish_analyzer import Blowfish_Analyzer
+from analyzers.aes_gcm_analyzer import Aes_Gcm_Analyzer
 
 # Import des modules utilitaries
 from utils import est_dechiffre
@@ -39,7 +40,8 @@ class DetecteurCryptoOrchestrateur:
         self.analyzers: dict[str, CryptoAnalyzer] = {
             "AES-CBC": Aes_Cbc_Analyzer(),
             "ChaCha20": ChaCha20_Analyzer(),
-            "Blowfish": Blowfish_Analyzer()
+            "Blowfish": Blowfish_Analyzer(),
+            "AES-GCM": Aes_Gcm_Analyzer()
         }
         self.missions_completees: list[dict[str, Union[str, list[ResultatAnalyse], float]]]  = []
         self.statistiques_globales: dict[str, Union[int, float]] = {
