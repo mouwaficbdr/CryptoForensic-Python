@@ -146,6 +146,9 @@ class BlowfishAnalyzerTester(TestCase):
             self.analyzer.dechiffrer('dohi.txt', self.key)
 
     # def test_dechiffrer_fichier(self):
+    #     # Déchiffrement du fichier valide en utilisant la bonne clé
+    #     self.assertEqual(self.analyzer.dechiffrer(self.fichier_crypte_valide, self.key), self.mot_a_trouver)
+
     #     # Cas où la valeur de sortie ne correspond à celle attendue
     #     self.assertNotEqual(self.analyzer.dechiffrer(self.fichier_crypte_valide, self.key), b'Dohi 1 fois')
         
