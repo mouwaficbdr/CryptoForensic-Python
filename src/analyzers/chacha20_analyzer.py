@@ -7,9 +7,8 @@ import os
 import sys
 from typing import List
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from crypto_analyzer import CryptoAnalyzer
-from utils import calculer_entropie
+from src.crypto_analyzer import CryptoAnalyzer
+from src.utils import calculer_entropie
 
 # Définition de la classe ChaCha20_Analyzer
 class ChaCha20_Analyzer(CryptoAnalyzer):
@@ -88,9 +87,23 @@ class ChaCha20_Analyzer(CryptoAnalyzer):
             print(f"Erreur lors de l'identification de l'algorithme: {e}")
             return 0.0
 
-    def filtrer_dictionnaire_par_indices(self, chemin_fichier_chiffre: str) -> List[bytes]:
+    def filtrer_dictionnaire_par_indices(self, chemin_dictionnaire: str) -> List[bytes]:
         # En supposant qu'elle retourne une liste de bytes pour les clés.
-        return []
+
+        """
+            Cette fonction a pour but de filter le fichier de dictionnaire en fonction des différents niveaux d'indices
+            pour déterminer les données les plus pertinentes.
+
+            Args: 
+                chemin_dictionnaire(str): Le chemin vers le dictionnaire fourni 
+
+            Returns: 
+                list[bytes]: La liste de tous les mots susceptibles d'être des clés adéquates.
+        """
+        f = open('keys/wordlist.txt', 'rb')
+        cle = f.readlines()
+        f.close()
+        return cle
 
     def generer_cles_candidates(self, chemin_dictionnaire: str) -> List[bytes]:
         """
@@ -107,9 +120,20 @@ class ChaCha20_Analyzer(CryptoAnalyzer):
         cles_candidates: List[bytes] = []
         for cle in donnees_fichier_filtre:
             cles_candidates.append(hashlib.sha256(cle).digest())
+        print(cles_candidates)
         return cles_candidates
     
     def dechiffrer(self, chemin_fichier_chiffre: str, cle_donnee: bytes) -> bytes:
+        """
+            Cette fonction récupère le nonce et le texte chiffré dans le fichier crypté et tente de déchiffrer le texte crypté en
+            utilisant la clé donnée.
+
+            Args:
+                chemin_fichier_chiffre(str): Le chemin du fichier à déchiffrer
+                cle_donnee(bytes): La clé sur 256 bits utilisée pour tenter le déchiffrement du texte crypté dans le fichier.
+        """
+
+
         if len(cle_donnee) != self._CHACHA20_LONGUEUR_CLE:
             raise ValueError("Erreur : La clé n'a pas la taille correcte")
         
@@ -133,7 +157,7 @@ class ChaCha20_Analyzer(CryptoAnalyzer):
 # L'appel direct a été déplacé dans un bloc if __name__ == "__main__" pour de bonnes pratiques (Mouwafic)
 if __name__ == "__main__":
     try:
-        resultat_dechiffrement: bytes = ChaCha20_Analyzer().dechiffrer("mission2.enc", os.urandom(32))
+        resultat_dechiffrement: bytes = ChaCha20_Analyzer().dechiffrer("data/mission2.enc", os.urandom(32))
         print(f"Résultat du déchiffrement : {resultat_dechiffrement.decode('utf-8')}")
     except ValueError as ve:
         print(ve)
