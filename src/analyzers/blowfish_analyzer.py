@@ -160,10 +160,8 @@ class Blowfish_Analyzer(CryptoAnalyzer):
       bytes: les données originales 
     """
     
-    #La taille de clé est dans l'intervalle 32-448bits et est multiple de 8
-    print(cle_donnee)
-    if len(cle_donnee) not in range(4, 55, 8):
-      print(len(cle_donnee))
+    #La taille de clé est dans l'intervalle 4-56 bytes (32-448 bits)
+    if len(cle_donnee) < 4 or len(cle_donnee) > 56:
       raise ValueError('Taille de clé invalide.')
     
     try:
@@ -194,6 +192,12 @@ class Blowfish_Analyzer(CryptoAnalyzer):
       
     except FileNotFoundError:
       raise
+    except ValueError as e:
+      # Erreur de déchiffrement (clé incorrecte, padding invalide)
+      return b""
+    except Exception as e:
+      # Erreur critique inattendue
+      raise RuntimeError(f"Erreur critique lors du déchiffrement Blowfish: {e}")
     
 
 # if __name__ == "__main__":

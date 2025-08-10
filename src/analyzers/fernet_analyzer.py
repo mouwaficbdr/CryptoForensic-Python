@@ -134,6 +134,10 @@ class FernetAnalyzer(CryptoAnalyzer):
         FileNotFoundError: Si le fichier est introuvable.
         ValueError: Si le déchiffrement échoue.
       """
+      # Validation de la taille de clé (Fernet nécessite 32 bytes)
+      if len(cle_donnee) != 32:
+          raise ValueError("Erreur : La clé Fernet doit faire 32 bytes")
+          
       try:
         with open(chemin_fichier_chiffre, "rb") as f:
           jeton_fernet_bytes = f.read()
@@ -145,6 +149,12 @@ class FernetAnalyzer(CryptoAnalyzer):
         
       except FileNotFoundError:
         raise
-      except Exception:
-        # Lève une erreur générique pour les échecs de déchiffrement (clé incorrecte, etc.)
-        raise ValueError("Échec du déchiffrement avec cette clé.")
+      except ValueError as e:
+        # Erreur de déchiffrement (clé incorrecte, format invalide)
+        # Ne pas retourner b"" si c'est une erreur de validation de taille
+        if "doit faire 32 bytes" in str(e):
+            raise
+        return b""
+      except Exception as e:
+        # Erreur de déchiffrement (clé incorrecte, format invalide)
+        return b""

@@ -75,13 +75,15 @@ class Aes_Gcm_Analyzer(CryptoAnalyzer):
     mots_de_passe_cible = self.__filtrer_dictionnaire_par_indice(chemin_dictionnaire)
     
     clees_candidates: list[bytes] = []
-    kdf = PBKDF2HMAC(
-      algorithm=hashes.SHA256(),
-      length=self._PBKDF2_LONGUEUR_CLE,
-      iterations=self._PBKDF2_ITERATIONS,
-      salt=self._PBKDF2_SALT
-    )
+    
     for mot_de_passe in mots_de_passe_cible:
+      # Créer une nouvelle instance de PBKDF2 pour chaque mot de passe
+      kdf = PBKDF2HMAC(
+        algorithm=hashes.SHA256(),
+        length=self._PBKDF2_LONGUEUR_CLE,
+        iterations=self._PBKDF2_ITERATIONS,
+        salt=self._PBKDF2_SALT
+      )
       mot_de_passe_en_octets: bytes = mot_de_passe.encode('utf-8')
       cle_derivee: bytes = kdf.derive(mot_de_passe_en_octets)
       clees_candidates.append(cle_derivee)
@@ -89,18 +91,44 @@ class Aes_Gcm_Analyzer(CryptoAnalyzer):
     return clees_candidates
 
   def identifier_algo(self, chemin_fichier_chiffre):
-     try :
+
+     """
+     Identifie si le fichier utilise l'algorithme AES GCM.
+     
+     Args:
+         chemin_fichier_chiffre(str): Le chemin vers le fichier chiffré.
+         
+     Returns:
+         float: Probabilité que le fichier utilise AES GCM (0.0 à 1.0).
+     """
+    try :
       with open(chemin_fichier_chiffre,'rb') as f:
           if len(f.read()) < 28 : # Prise en compte de l'entropie (12 bytes) et du tag (16 bytes) comme taille minimales pour un cryptage AES-GCM
             proba = 0.00
           if calculer_entropie(f.read()) > 8 :
             proba = 0.60
-     except FileNotFoundError  :
-        return 0.0
-     
+     except Exception as e:
+         print(f"Erreur lors de l'identification de l'algorithme: {e}")
+         return 0.0
+        
      return proba
    
   def dechiffrer(self, chemin_fichier_chiffre, cle_donnee):
-      return super().dechiffrer(chemin_fichier_chiffre, cle_donnee)
-  
-Aes_Gcm_Analyzer().identifier_algo("data/mission2.enc")
+      """
+      Déchiffre le fichier chiffré avec la clé donnée.
+      
+      Args:
+          chemin_fichier_chiffre(str): Le chemin vers le fichier chiffré.
+          cle_donnee(bytes): La clé de déchiffrement.
+          
+      Returns:
+          bytes: Le contenu déchiffré ou une chaîne vide en cas d'échec.
+      """
+      try:
+          # Pour l'instant, retourner une chaîne vide
+          # TODO: Implémenter la logique de déchiffrement AES GCM
+          return b""
+      except Exception as e:
+          print(f"Erreur lors du déchiffrement: {e}")
+          return b""
+
