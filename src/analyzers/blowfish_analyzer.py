@@ -1,8 +1,11 @@
 from src.crypto_analyzer import CryptoAnalyzer
 from src.utils import calculer_entropie
 import hashlib
-from cryptography.hazmat.primitives.ciphers import algorithms, Cipher, modes
+import base64
+import re
+from cryptography.hazmat.primitives.ciphers import Cipher, modes
 from cryptography.hazmat.primitives.padding import PKCS7
+from cryptography.hazmat.decrepit.ciphers.algorithms import Blowfish
 class Blowfish_Analyzer(CryptoAnalyzer):
   '''Détermine si l'algo blowfish est utilisé, génère des clés et tente de de déchffrer un fichier chiffré en utilisant les clés générées.
   
@@ -17,7 +20,7 @@ class Blowfish_Analyzer(CryptoAnalyzer):
 
   '''
   
-  __BLOWFISH_TAILLE_BLOC = 8
+  __BLOWFISH_TAILLE_BLOC = 64
   __BLOWFISH_TAILLE_IV = 8
   
   def identifier_algo(self, chemin_fichier_chiffre: str) -> float:
@@ -132,6 +135,18 @@ class Blowfish_Analyzer(CryptoAnalyzer):
     
     return cles_candidates
     
+  def decode_base64(self, encoded_bytes, altchars=b'+/'):
+    encoded_bytes = re.sub(
+        rb'[^a-zA-Z0-9%s]+' %
+        altchars, b'', encoded_bytes)
+
+    missing_padding_length = len(encoded_bytes) % 4
+
+    if missing_padding_length:
+        encoded_bytes += b'=' * (4 - missing_padding_length)
+
+    return base64.b64decode(encoded_bytes, altchars)
+  
   def dechiffrer(self, chemin_fichier_chiffre: str, cle_donnee: bytes) -> bytes:
     """
     Déchiffre le fichier supposé crypté par l'algorithme blowfish avec la clé donnée en respectant les critères de 
@@ -150,15 +165,16 @@ class Blowfish_Analyzer(CryptoAnalyzer):
       raise ValueError('Taille de clé invalide.')
     
     try:
-      
-      algorithm_blowfish = algorithms.Blowfish(cle_donnee)
+    
+      algorithm_blowfish = Blowfish(self.decode_base64(cle_donnee))
       texte_chiffre = ''
 
-      #Récupération de l'IV et des texte chiffré das le fichier
+      #Récupération de l'IV et du texte chiffré dans le fichier
       with open(chemin_fichier_chiffre, 'rb') as f:
-        initialization_vector = f.read(self.__BLOWFISH_TAILLE_IV)
-        texte_chiffre = f.read()
+        donnees = f.read()
       f.close()
+      initialization_vector = donnees[:self.__BLOWFISH_TAILLE_IV]
+      texte_chiffre = donnees[self.__BLOWFISH_TAILLE_IV:]
       
       #Initialisation du cipher
       cipher = Cipher(algorithm_blowfish, modes.CBC(initialization_vector))
@@ -184,3 +200,11 @@ class Blowfish_Analyzer(CryptoAnalyzer):
       raise RuntimeError(f"Erreur critique lors du déchiffrement Blowfish: {e}")
     
 
+# if __name__ == "__main__":
+#     try:
+#         resultat_dechiffrement: bytes = Blowfish_Analyzer().dechiffrer("CryptoForensic-Python/data/mission3.enc", os.urandom(32))
+#         print(f"Résultat du déchiffrement : {resultat_dechiffrement.decode('utf-8')}")
+#     except ValueError as ve:
+#         print(ve)
+#     except FileNotFoundError:
+#         print("Erreur: Le fichier 'mission2.enc' est introuvable.")
