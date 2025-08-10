@@ -91,14 +91,14 @@ class Aes_Gcm_Analyzer(CryptoAnalyzer):
   def identifier_algo(self, chemin_fichier_chiffre):
      try :
       with open(chemin_fichier_chiffre,'rb') as f:
-          if len(f.read()) < 20 : # Prise en compte de l'entropie (12 bytes) et du tag (16 bytes) comme taille minimales pour un cryptage AES-GCM
-            entropie = 0.00
+          if len(f.read()) < 28 : # Prise en compte de l'entropie (12 bytes) et du tag (16 bytes) comme taille minimales pour un cryptage AES-GCM
+            proba = 0.00
           if calculer_entropie(f.read()) > 8 :
-            entropie = 1.00
+            proba = 0.60
      except FileNotFoundError  :
         return 0.0
      
-     return entropie
+     return proba
    
   def dechiffrer(self, chemin_fichier_chiffre, cle_donnee):
       return super().dechiffrer(chemin_fichier_chiffre, cle_donnee)
