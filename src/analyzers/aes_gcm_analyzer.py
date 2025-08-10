@@ -1,4 +1,4 @@
-from ..crypto_analyzer import CryptoAnalyzer
+from src.crypto_analyzer import CryptoAnalyzer
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives import hashes
 import re

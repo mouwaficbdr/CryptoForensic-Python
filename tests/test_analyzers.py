@@ -5,7 +5,6 @@ import hashlib
 from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
 
 from src.analyzers.aes_cbc_analyzer import Aes_Cbc_Analyzer
 from src.analyzers.chacha20_analyzer import ChaCha20_Analyzer

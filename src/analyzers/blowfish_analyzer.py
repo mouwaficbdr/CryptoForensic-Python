@@ -1,5 +1,5 @@
-from ..detecteur_crypto import CryptoAnalyzer
-from ..utils import calculer_entropie
+from src.crypto_analyzer import CryptoAnalyzer
+from src.utils import calculer_entropie
 import hashlib
 from cryptography.hazmat.primitives.ciphers import algorithms, Cipher, modes
 from cryptography.hazmat.primitives.padding import PKCS7
