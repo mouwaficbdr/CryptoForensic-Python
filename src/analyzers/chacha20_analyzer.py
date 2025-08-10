@@ -130,24 +130,30 @@ class ChaCha20_Analyzer(CryptoAnalyzer):
         """
 
 
+        # Validation de la taille de clé (ChaCha20 nécessite 32 bytes)
         if len(cle_donnee) != self._CHACHA20_LONGUEUR_CLE:
             raise ValueError("Erreur : La clé n'a pas la taille correcte")
-        
+            
         try:
             with open(chemin_fichier_chiffre, 'rb') as f:
                 nonce: bytes = f.read(self._CHACHA20_LONGUEUR_NONCE)
                 texte_chiffre: bytes = f.read()
 
-            aead = ChaCha20Poly1305(cle_donnee)
-            resultat: bytes = aead.decrypt(nonce, texte_chiffre, None)
-            
-            return resultat
+            try:
+                aead = ChaCha20Poly1305(cle_donnee)
+                resultat: bytes = aead.decrypt(nonce, texte_chiffre, None)
+                return resultat
+            except Exception as e:
+                # Erreur de déchiffrement (clé incorrecte, tag invalide)
+                return b""
 
         except FileNotFoundError:
             raise
         except InvalidTag:
+            # Erreur de déchiffrement (clé incorrecte, tag invalide)
             return b""
-        except Exception:
+        except Exception as e:
+            # Erreur de déchiffrement (clé incorrecte, format invalide)
             return b""
 
 # L'appel direct a été déplacé dans un bloc if __name__ == "__main__" pour de bonnes pratiques (Mouwafic)

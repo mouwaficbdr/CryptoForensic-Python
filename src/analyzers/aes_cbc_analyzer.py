@@ -132,6 +132,10 @@ class Aes_Cbc_Analyzer(CryptoAnalyzer):
         initialization_vector = f.read(16)
         donnees_chiffrees = f.read()
         
+        # Validation de la taille de clé (AES-256 nécessite 32 bytes)
+        if len(cle_donnee) != 32:
+            raise ValueError("Erreur : La clé AES-256 doit faire 32 bytes")
+        
         try:
           #Création de l'objet Cipher pour le déchiffrage
           algorithm_aes = algorithms.AES256(cle_donnee)
@@ -149,8 +153,15 @@ class Aes_Cbc_Analyzer(CryptoAnalyzer):
           
           return donnees_originales
         
-        except ValueError:
+        except ValueError as e:
+          # Erreur de déchiffrement (clé incorrecte, padding invalide)
+          # Ne pas retourner b"" si c'est une erreur de validation de taille
+          if "doit faire 32 bytes" in str(e):
+              raise
           return b""
+        except Exception as e:
+          # Erreur critique inattendue
+          raise RuntimeError(f"Erreur critique lors du déchiffrement AES-CBC: {e}")
           
     except FileNotFoundError:
       raise

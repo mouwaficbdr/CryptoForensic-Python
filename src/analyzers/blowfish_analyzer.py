@@ -176,5 +176,11 @@ class Blowfish_Analyzer(CryptoAnalyzer):
       
     except FileNotFoundError:
       raise
+    except ValueError as e:
+      # Erreur de déchiffrement (clé incorrecte, padding invalide)
+      return b""
+    except Exception as e:
+      # Erreur critique inattendue
+      raise RuntimeError(f"Erreur critique lors du déchiffrement Blowfish: {e}")
     
 
