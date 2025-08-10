@@ -94,7 +94,7 @@ class consoleInterface:
         print(f"\n[bold]Score de probabilité[/bold] : [green]{data.score_probabilite}[/green]")
         # print(data.texte_dechiffre)
         print(f"\n[bold]Temps d'éxécution[/bold] : [green]{round(data.temps_execution,4)}[/green] s")
-        esc=input("Veuillez appuyer sur la touche entrer pour retourner au menu principal")
+        esc=input("Veuillez appuyer sur la touche entrer pour retrouner au menu principal")
         if esc=="":
             self.default_menu()
         else : self.default_menu()
@@ -107,24 +107,14 @@ class consoleInterface:
         self.dynamiqueText("Mission complète automatique","green")
         self.dynamiqueText("Veuillez entrer le chemin du dossier :","white")
         time.sleep(0.02)
-        
-        chemin_dossier = self.prompt.ask("Veuillez entrer le chemin du dossier : ")
-        resultat = DetecteurCryptoOrchestrateur().mission_complete_automatique(chemin_dossier, "keys/wordlist.txt")
-        print(line for line in resultat)
-        # self.console.clear()
+        # chemin_dossier = self.prompt.ask("Veuillez entrer le chemin du dossier : ")
+        self.console.clear()
         self.dynamiqueText("Mission en cours...","green")
         time.sleep(0.02)
-        # self.console.clear()
+        self.console.clear()
         self.dynamiqueText("Mission terminée","green")
-        
-        esc=input("Veuillez appuyer sur la touche entrer pour retourner au menu principal")
         time.sleep(0.02)
-        
-        if esc=="":
-            self.default_menu()
-        else : self.default_menu()
-        
-        # self.default_menu()
+        self.default_menu()
 
     def menu_3(self):
         self.console.clear()
