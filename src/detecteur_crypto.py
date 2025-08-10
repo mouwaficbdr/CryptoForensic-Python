@@ -4,15 +4,16 @@ import time
 from typing import List, Union
 from pathlib import Path
 # Import des modules d'analyse
-from .analyzers.aes_cbc_analyzer import Aes_Cbc_Analyzer
-from .crypto_analyzer import CryptoAnalyzer
-from .analyzers.chacha20_analyzer import ChaCha20_Analyzer
-from .analyzers.blowfish_analyzer import Blowfish_Analyzer
-from .analyzers.aes_gcm_analyzer import Aes_Gcm_Analyzer
-from .rapport_mission import generer_rapport_mission
-from .analyzers.fernet_analyzer import FernetAnalyzer
+from src.analyzers.aes_cbc_analyzer import Aes_Cbc_Analyzer
+from src.crypto_analyzer import CryptoAnalyzer
+from src.analyzers.chacha20_analyzer import ChaCha20_Analyzer
+from src.analyzers.blowfish_analyzer import Blowfish_Analyzer
+from src.analyzers.aes_gcm_analyzer import Aes_Gcm_Analyzer
+from src.analyzers.fernet_analyzer import FernetAnalyzer
+from src.rapport_mission import generer_rapport_mission
+
 # Import des modules utilitaries
-from utils import est_dechiffre
+from src.utils import est_dechiffre
 
 class ResultatAnalyse:
     """

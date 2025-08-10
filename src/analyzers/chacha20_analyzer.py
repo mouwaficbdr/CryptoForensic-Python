@@ -7,9 +7,8 @@ import os
 import sys
 from typing import List
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from ..crypto_analyzer import CryptoAnalyzer
-from ..utils import calculer_entropie
+from src.crypto_analyzer import CryptoAnalyzer
+from src.utils import calculer_entropie
 
 # Définition de la classe ChaCha20_Analyzer
 class ChaCha20_Analyzer(CryptoAnalyzer):

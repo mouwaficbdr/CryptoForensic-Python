@@ -1,8 +1,7 @@
-import base64
-import os
-from ..detecteur_crypto import CryptoAnalyzer
-from ..utils import calculer_entropie
+from src.crypto_analyzer import CryptoAnalyzer
+from src.utils import calculer_entropie
 import hashlib
+import base64
 import re
 from cryptography.hazmat.primitives.ciphers import Cipher, modes
 from cryptography.hazmat.primitives.padding import PKCS7
