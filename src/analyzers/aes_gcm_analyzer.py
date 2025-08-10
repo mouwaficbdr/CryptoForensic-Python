@@ -1,6 +1,7 @@
 from src.crypto_analyzer import CryptoAnalyzer
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives import hashes
+from src.utils import calculer_entropie
 import re
 
 class Aes_Gcm_Analyzer(CryptoAnalyzer):
@@ -88,7 +89,18 @@ class Aes_Gcm_Analyzer(CryptoAnalyzer):
     return clees_candidates
 
   def identifier_algo(self, chemin_fichier_chiffre):
-     return super().identifier_algo(chemin_fichier_chiffre)
+     try :
+      with open(chemin_fichier_chiffre,'rb') as f:
+          if len(f.read()) < 20 : # Prise en compte de l'entropie (12 bytes) et du tag (16 bytes) comme taille minimales pour un cryptage AES-GCM
+            entropie = 0.00
+          if calculer_entropie(f.read()) > 8 :
+            entropie = 1.00
+     except FileNotFoundError  :
+        return 0.0
+     
+     return entropie
    
   def dechiffrer(self, chemin_fichier_chiffre, cle_donnee):
       return super().dechiffrer(chemin_fichier_chiffre, cle_donnee)
+  
+Aes_Gcm_Analyzer().identifier_algo("data/mission2.enc")
