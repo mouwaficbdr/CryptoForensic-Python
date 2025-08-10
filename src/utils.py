@@ -101,7 +101,9 @@ def verifier_texte_dechiffre(texte: str) -> Dict[str, Any]:
     copy=texte
     for lettre in tab:
         copy=copy.replace(lettre, ' ')
-    mots = [mot.removesuffix('\n').removeprefix('\n') for mot in copy.strip().split(' ') if mot != '\n']
+    
+    # Diviser par espaces et filtrer les mots vides
+    mots = [mot.strip() for mot in copy.split(' ') if mot.strip()]
     stats['nombre_mots']=len(mots)
     
     # Verifier que le chaque mot du texte est un mot anglais/francais 
@@ -191,3 +193,5 @@ def rangerDico() -> None:
     except FileNotFoundError: 
         print('Fichier non trouvé.')
 # rangerDico()         
+
+print(verifier_texte_dechiffre("je talk !a mamamia:?\n"))
