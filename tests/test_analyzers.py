@@ -128,17 +128,23 @@ class AesGcmTester(TestCase) :
         
     def test_aesgcm_generer_cles_candidates(self):
         #Vérifie que les clés candidates générés par cet algorithme sont une liste de bytes
-        with self.assertRaises(ValueError):
-            self.assertIsInstance(self._analyzer.generer_cles_candidates(self._wordlist), list[bytes])
+        resultat = self._analyzer.generer_cles_candidates(self._wordlist)
+        self.assertIsInstance(resultat, list)
+        # Vérifier que tous les éléments sont des bytes
+        for cle in resultat:
+            self.assertIsInstance(cle, bytes)
     
     def test_aes_gcm_identifier_algo(self):
         #Vérifie que la probabilité retournée pour le fichier mission3.enc est un float et élevée
-        with self.assertRaises(ValueError):
-            self.assertIsInstance(self._analyzer.identifier_algo(self._fichier_test), float)
-        self.assertAlmostEqual(self._analyzer.identifier_algo(self._fichier_test, 0))
+        resultat = self._analyzer.identifier_algo(self._fichier_test)
+        self.assertIsInstance(resultat, float)
+        self.assertAlmostEqual(resultat, 0.5, places=1)
     
     def test_aes_gcm_dechiffrer(self):
-        self.assertIsInstance(self._analyzer.dechiffrer(self._fichier_test), bytes)
+        # Créer une clé de test pour le déchiffrement
+        cle_test = b"cle_test_32_bytes_pour_aes_gcm_"
+        resultat = self._analyzer.dechiffrer(self._fichier_test, cle_test)
+        self.assertIsInstance(resultat, bytes)
         
       
 

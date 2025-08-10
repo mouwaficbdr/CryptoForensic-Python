@@ -101,7 +101,9 @@ def verifier_texte_dechiffre(texte: str) -> Dict[str, Any]:
     copy=texte
     for lettre in tab:
         copy=copy.replace(lettre, ' ')
-    mots = [mot.removesuffix('\n').removeprefix('\n') for mot in copy.strip().split(' ') if mot != '\n']
+    
+    # Diviser par espaces et filtrer les mots vides
+    mots = [mot.strip() for mot in copy.split(' ') if mot.strip()]
     stats['nombre_mots']=len(mots)
     
     # Verifier que le chaque mot du texte est un mot anglais/francais 
@@ -120,7 +122,9 @@ def verifier_texte_dechiffre(texte: str) -> Dict[str, Any]:
                 try:
                     with open(chemin, 'r', encoding='latin-1') as f: 
                         for ligne in f:
-                            if  re.match(ligne.strip().removesuffix('\n'), mot, re.I):
+                            ligne_clean = ligne.strip().removesuffix('\n')
+                            # Utiliser une correspondance exacte au lieu de re.match
+                            if ligne_clean.lower() == mot.lower():
                                 mots_valides += 1
                                 trouve=True
                                 break
