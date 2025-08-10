@@ -2,13 +2,14 @@
 import os
 import time
 from typing import List, Union
-
+from pathlib import Path
 # Import des modules d'analyse
-from analyzers.aes_cbc_analyzer import Aes_Cbc_Analyzer
-from crypto_analyzer import CryptoAnalyzer
-from analyzers.chacha20_analyzer import ChaCha20_Analyzer
-from analyzers.blowfish_analyzer import Blowfish_Analyzer
-from analyzers.aes_gcm_analyzer import Aes_Gcm_Analyzer
+from .analyzers.aes_cbc_analyzer import Aes_Cbc_Analyzer
+from .crypto_analyzer import CryptoAnalyzer
+from .analyzers.chacha20_analyzer import ChaCha20_Analyzer
+from .analyzers.blowfish_analyzer import Blowfish_Analyzer
+from .analyzers.aes_gcm_analyzer import Aes_Gcm_Analyzer
+from .rapport_mission import generer_rapport_mission
 
 # Import des modules utilitaries
 from utils import est_dechiffre
@@ -68,7 +69,7 @@ class DetecteurCryptoOrchestrateur:
         
         try:
             # Vérification de l'existence du fichier
-            if not os.path.exists(f"data/{chemin_fichier_chiffre}"):
+            if not os.path.isfile(Path('data')/f"{chemin_fichier_chiffre}"):
                 print("Erreur: Fichier non trouvé")
                 return ResultatAnalyse("", b"", 0.0, b"", 0.0, 0)
             
@@ -156,7 +157,7 @@ class DetecteurCryptoOrchestrateur:
                 chemin_fichier = os.path.join(dossier_chiffres, fichier)
                 
                 # Analyse du fichier
-                resultat = self.analyser_fichier_specifique(chemin_fichier)
+                resultat = self.analyser_fichier_specifique(fichier)
                 
                 # Tentative de déchiffrement si algorithme détecté
                 if resultat.algo:
@@ -181,7 +182,7 @@ class DetecteurCryptoOrchestrateur:
                     print(f"{fichier}: Aucun algorithme détecté")
             
             # Rapport de synthèse final
-            self.generer_rapport_synthese(resultats, time.time() - debut_mission)
+            generer_rapport_mission().generer_rapport_synthese(resultats, time.time() - debut_mission)
             
             # Mise à jour des statistiques globales
             self.missions_completees.append({
@@ -252,4 +253,4 @@ class DetecteurCryptoOrchestrateur:
             temps_execution = time.time() - debut_attaque
             return ResultatAnalyse("", b"", 0.0, b"", temps_execution, 0)
 
-print(DetecteurCryptoOrchestrateur().analyser_fichier_specifique(f"{os.path.abspath(os.curdir)}\\CryptoForensic-Python\\data\\mission2.enc"))
+# print(DetecteurCryptoOrchestrateur().analyser_fichier_specifique(f"{os.path.abspath(os.curdir)}\\CryptoForensic-Python\\data\\mission2.enc"))
