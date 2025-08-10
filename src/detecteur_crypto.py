@@ -10,7 +10,7 @@ from .analyzers.chacha20_analyzer import ChaCha20_Analyzer
 from .analyzers.blowfish_analyzer import Blowfish_Analyzer
 from .analyzers.aes_gcm_analyzer import Aes_Gcm_Analyzer
 from .rapport_mission import generer_rapport_mission
-
+from .analyzers.fernet_analyzer import FernetAnalyzer
 # Import des modules utilitaries
 from utils import est_dechiffre
 
@@ -42,7 +42,8 @@ class DetecteurCryptoOrchestrateur:
             "AES-CBC": Aes_Cbc_Analyzer(),
             "ChaCha20": ChaCha20_Analyzer(),
             "Blowfish": Blowfish_Analyzer(),
-            "AES-GCM": Aes_Gcm_Analyzer()
+            "AES-GCM": Aes_Gcm_Analyzer(),
+            "Fernet": FernetAnalyzer(),
         }
         self.missions_completees: list[dict[str, Union[str, list[ResultatAnalyse], float]]]  = []
         self.statistiques_globales: dict[str, Union[int, float]] = {

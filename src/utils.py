@@ -1,4 +1,5 @@
 import math
+import re
 import string
 from pathlib import Path
 from typing import Any, Dict, List, TypedDict
@@ -58,7 +59,7 @@ def est_dechiffre(texte:str) -> bool:
     if stats['ponctuation_valide'] > 50 :
         pourcent += 20
     
-    return True if pourcent > 70 else False
+    return True if pourcent > 80 else False
 
         
 
@@ -119,7 +120,7 @@ def verifier_texte_dechiffre(texte: str) -> Dict[str, Any]:
                 try:
                     with open(chemin, 'r', encoding='latin-1') as f: 
                         for ligne in f:
-                            if ligne.strip() == mot:
+                            if  re.match(ligne.strip().removesuffix('\n'), mot, re.I):
                                 mots_valides += 1
                                 trouve=True
                                 break
