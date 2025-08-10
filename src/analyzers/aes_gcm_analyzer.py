@@ -1,6 +1,7 @@
 from src.crypto_analyzer import CryptoAnalyzer
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives import hashes
+from src.utils import calculer_entropie
 import re
 
 class Aes_Gcm_Analyzer(CryptoAnalyzer):
@@ -90,6 +91,7 @@ class Aes_Gcm_Analyzer(CryptoAnalyzer):
     return clees_candidates
 
   def identifier_algo(self, chemin_fichier_chiffre):
+
      """
      Identifie si le fichier utilise l'algorithme AES GCM.
      
@@ -99,13 +101,17 @@ class Aes_Gcm_Analyzer(CryptoAnalyzer):
      Returns:
          float: Probabilité que le fichier utilise AES GCM (0.0 à 1.0).
      """
-     try:
-         # Pour l'instant, retourner une probabilité par défaut
-         # TODO: Implémenter la logique d'identification AES GCM
-         return 0.5
+    try :
+      with open(chemin_fichier_chiffre,'rb') as f:
+          if len(f.read()) < 28 : # Prise en compte de l'entropie (12 bytes) et du tag (16 bytes) comme taille minimales pour un cryptage AES-GCM
+            proba = 0.00
+          if calculer_entropie(f.read()) > 8 :
+            proba = 0.60
      except Exception as e:
          print(f"Erreur lors de l'identification de l'algorithme: {e}")
          return 0.0
+        
+     return proba
    
   def dechiffrer(self, chemin_fichier_chiffre, cle_donnee):
       """
@@ -125,3 +131,4 @@ class Aes_Gcm_Analyzer(CryptoAnalyzer):
       except Exception as e:
           print(f"Erreur lors du déchiffrement: {e}")
           return b""
+
