@@ -86,3 +86,9 @@ class Aes_Gcm_Analyzer(CryptoAnalyzer):
       clees_candidates.append(cle_derivee)
 
     return clees_candidates
+
+  def identifier_algo(self, chemin_fichier_chiffre):
+     return super().identifier_algo(chemin_fichier_chiffre)
+   
+  def dechiffrer(self, chemin_fichier_chiffre, cle_donnee):
+      return super().dechiffrer(chemin_fichier_chiffre, cle_donnee)

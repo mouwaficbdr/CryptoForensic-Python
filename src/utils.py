@@ -1,4 +1,5 @@
 import math
+import re
 import string
 from pathlib import Path
 from typing import Any, Dict, List, TypedDict
@@ -55,10 +56,10 @@ def est_dechiffre(texte:str) -> bool:
         pourcent += 30
     
     # Le respect de la ponctuation, les 20% restants
-    if stats['ponctuation'] > 50 :
+    if stats['ponctuation_valide'] > 50 :
         pourcent += 20
     
-    return True if pourcent > 70 else False
+    return True if pourcent > 80 else False
 
         
 
@@ -100,7 +101,7 @@ def verifier_texte_dechiffre(texte: str) -> Dict[str, Any]:
     copy=texte
     for lettre in tab:
         copy=copy.replace(lettre, ' ')
-    mots = [mot for mot in copy.strip().split(' ') if mot]
+    mots = [mot.removesuffix('\n').removeprefix('\n') for mot in copy.strip().split(' ') if mot != '\n']
     stats['nombre_mots']=len(mots)
     
     # Verifier que le chaque mot du texte est un mot anglais/francais 
@@ -119,7 +120,7 @@ def verifier_texte_dechiffre(texte: str) -> Dict[str, Any]:
                 try:
                     with open(chemin, 'r', encoding='latin-1') as f: 
                         for ligne in f:
-                            if ligne.strip() == mot:
+                            if  re.match(ligne.strip().removesuffix('\n'), mot, re.I):
                                 mots_valides += 1
                                 trouve=True
                                 break
