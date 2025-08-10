@@ -56,15 +56,15 @@ class generer_rapport_mission():
         except FileNotFoundError:
             print('Fichier non trouvé')
             
-print(generer_rapport_mission().generer_rapport_synthese({
-    'algorithme':'CHACHA20', 
-    'fichier': 'mission1.enc',
-    'cle':'PK7',
-    'tentatives':'127',
-    'temps_execution':"368s",
-    'taux_succes': "97%",
-    'statut_succes':'Succès',
-    'texte_dechiffre':'Je suis là!'
-}))
+# print(generer_rapport_mission().generer_rapport_synthese({
+#     'algorithme':'CHACHA20', 
+#     'fichier': 'mission1.enc',
+#     'cle':'PK7',
+#     'tentatives':'127',
+#     'temps_execution':"368s",
+#     'taux_succes': "97%",
+#     'statut_succes':'Succès',
+#     'texte_dechiffre':'Je suis là!'
+# }))
 
-print(generer_rapport_mission().recuperer_ancien_rapport("05/08/25")[0])
+# print(generer_rapport_mission().recuperer_ancien_rapport("05/08/25")[0])
