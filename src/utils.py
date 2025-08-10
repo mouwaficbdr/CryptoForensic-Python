@@ -193,3 +193,5 @@ def rangerDico() -> None:
     except FileNotFoundError: 
         print('Fichier non trouvé.')
 # rangerDico()         
+
+# print(verifier_texte_dechiffre("je talk !a mamamia:?\n"))
