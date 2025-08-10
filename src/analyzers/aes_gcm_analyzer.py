@@ -74,13 +74,15 @@ class Aes_Gcm_Analyzer(CryptoAnalyzer):
     mots_de_passe_cible = self.__filtrer_dictionnaire_par_indice(chemin_dictionnaire)
     
     clees_candidates: list[bytes] = []
-    kdf = PBKDF2HMAC(
-      algorithm=hashes.SHA256(),
-      length=self._PBKDF2_LONGUEUR_CLE,
-      iterations=self._PBKDF2_ITERATIONS,
-      salt=self._PBKDF2_SALT
-    )
+    
     for mot_de_passe in mots_de_passe_cible:
+      # Créer une nouvelle instance de PBKDF2 pour chaque mot de passe
+      kdf = PBKDF2HMAC(
+        algorithm=hashes.SHA256(),
+        length=self._PBKDF2_LONGUEUR_CLE,
+        iterations=self._PBKDF2_ITERATIONS,
+        salt=self._PBKDF2_SALT
+      )
       mot_de_passe_en_octets: bytes = mot_de_passe.encode('utf-8')
       cle_derivee: bytes = kdf.derive(mot_de_passe_en_octets)
       clees_candidates.append(cle_derivee)
@@ -88,7 +90,38 @@ class Aes_Gcm_Analyzer(CryptoAnalyzer):
     return clees_candidates
 
   def identifier_algo(self, chemin_fichier_chiffre):
-     return super().identifier_algo(chemin_fichier_chiffre)
+     """
+     Identifie si le fichier utilise l'algorithme AES GCM.
+     
+     Args:
+         chemin_fichier_chiffre(str): Le chemin vers le fichier chiffré.
+         
+     Returns:
+         float: Probabilité que le fichier utilise AES GCM (0.0 à 1.0).
+     """
+     try:
+         # Pour l'instant, retourner une probabilité par défaut
+         # TODO: Implémenter la logique d'identification AES GCM
+         return 0.5
+     except Exception as e:
+         print(f"Erreur lors de l'identification de l'algorithme: {e}")
+         return 0.0
    
   def dechiffrer(self, chemin_fichier_chiffre, cle_donnee):
-      return super().dechiffrer(chemin_fichier_chiffre, cle_donnee)
+      """
+      Déchiffre le fichier chiffré avec la clé donnée.
+      
+      Args:
+          chemin_fichier_chiffre(str): Le chemin vers le fichier chiffré.
+          cle_donnee(bytes): La clé de déchiffrement.
+          
+      Returns:
+          bytes: Le contenu déchiffré ou une chaîne vide en cas d'échec.
+      """
+      try:
+          # Pour l'instant, retourner une chaîne vide
+          # TODO: Implémenter la logique de déchiffrement AES GCM
+          return b""
+      except Exception as e:
+          print(f"Erreur lors du déchiffrement: {e}")
+          return b""

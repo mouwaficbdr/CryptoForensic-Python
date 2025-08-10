@@ -120,7 +120,9 @@ def verifier_texte_dechiffre(texte: str) -> Dict[str, Any]:
                 try:
                     with open(chemin, 'r', encoding='latin-1') as f: 
                         for ligne in f:
-                            if  re.match(ligne.strip().removesuffix('\n'), mot, re.I):
+                            ligne_clean = ligne.strip().removesuffix('\n')
+                            # Utiliser une correspondance exacte au lieu de re.match
+                            if ligne_clean.lower() == mot.lower():
                                 mots_valides += 1
                                 trouve=True
                                 break
