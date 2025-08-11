@@ -1,4 +1,4 @@
-from src.detecteur_crypto import DetecteurCryptoOrchestrateur
+from src.detecteur_crypto import DetecteurCryptoOrchestrateur, ResultatAnalyse
 from src.analyzers.blowfish_analyzer import Blowfish_Analyzer
 from src.analyzers.aes_cbc_analyzer import Aes_Cbc_Analyzer
 from src.interface_console import consoleInterface
@@ -14,3 +14,4 @@ import os
 #     print("Erreur: Le fichier 'mission3.enc' est introuvable.")
 
 consoleInterface()
+# print(DetecteurCryptoOrchestrateur().mission_complete_automatique('data/', 'keys/wordlist.txt'))
