@@ -30,7 +30,7 @@ def calculer_entropie(bytes: bytes) -> float:
                     i += 1
 
         proba_byte = 1 / i
-        entropie +=  (proba_byte) * math.log(1/proba_byte, 8)
+        entropie +=  (proba_byte) * math.log(1/proba_byte, 2)
     return entropie
         
 
