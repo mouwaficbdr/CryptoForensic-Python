@@ -1,15 +1,19 @@
+import base64
 from unittest import TestCase, main
 import os
 import sys
 import hashlib
 from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from cryptography.fernet import Fernet
 from pathlib import Path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from src.analyzers.aes_cbc_analyzer import Aes_Cbc_Analyzer
 from src.analyzers.chacha20_analyzer import ChaCha20_Analyzer
 from src.analyzers.aes_gcm_analyzer import Aes_Gcm_Analyzer
+from src.analyzers.fernet_analyzer import FernetAnalyzer
+
 
 
 class AesCbcAnalyzerTester(TestCase):
@@ -150,7 +154,50 @@ class AesGcmTester(TestCase) :
         resultat = self._analyzer.dechiffrer(self._fichier_test, cle_test)
         self.assertIsInstance(resultat, bytes)
         
-      
+class FernetTester(TestCase) :
+    _wordlist = "keys/wordlist.txt"
+    _analyzer=FernetAnalyzer()
+    _fichier_test = Path('tests/fichiers_pour_tests') / 'fernet_invalide.enc'
+    _texte_test = b"Test effectue pour Fernet, encore. Nous en sommes a la.fin"   
+    _key = os.urandom(32)
 
+    def setUp(self):
+        """
+        Crée un fichier pour les tests relatifs à Fernet
+        """
+        try :
+            with open(self._fichier_test, 'wb') as f:
+                texte_chiffre = Fernet(base64.urlsafe_b64encode(self._key)).encrypt(self._texte_test)
+                f.write(texte_chiffre)
+            f.close()
+        except FileNotFoundError :
+            raise
+        
+    def test_fernet_gk(self):
+        resultat = self._analyzer.generer_cles_candidates(self._wordlist)
+        self.assertIsInstance(resultat, list)
+        # Vérifier que tous les éléments sont des bytes
+        for cle in resultat:
+            self.assertIsInstance(cle, bytes)
+            
+    def test_fernet_id_algo(self):
+        #Vérifier que seul le fichier mission 5 a plus de 0.8 de score pour l'identification de Fernet
+        for i in range(5) :
+            if i+1 != 5 and self._analyzer.identifier_algo(f"mission{i+1}.enc") >= 0.8:
+                raise Exception('Non correspondance entre probabilité et algorithme.')  
+    
+    def test_dechiffrer(self) :
+        #Vérifie que le déchiffrement de fernet est opérationnel
+        resultat = self._analyzer.dechiffrer
+        self.assertEqual(resultat(self._fichier_test, self._key), self._texte_test)
+        
+        #Vérifie le cas de clé non correspondante
+        with self.assertRaises(ValueError) :
+            self.assertIsInstance(resultat(self._fichier_test, os.urandom(16)), ValueError)
+        
+        #Vérifie le cas de fichier non trouvé
+        with self.assertRaises(FileNotFoundError):
+            self.assertIsInstance(resultat('dohi.txt', os.urandom(32)), FileNotFoundError)     
+        
 if __name__ == '__main__':
     main()

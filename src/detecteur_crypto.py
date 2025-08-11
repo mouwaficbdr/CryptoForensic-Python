@@ -10,22 +10,24 @@ from src.analyzers.chacha20_analyzer import ChaCha20_Analyzer
 from src.analyzers.blowfish_analyzer import Blowfish_Analyzer
 from src.analyzers.aes_gcm_analyzer import Aes_Gcm_Analyzer
 from src.analyzers.fernet_analyzer import FernetAnalyzer
+from src.rapport_mission import rapport_mission
 
 # Import des modules utilitaries
-from src.utils import est_dechiffre
+from src.utils import verifier_texte_dechiffre
 
 class ResultatAnalyse:
     """
         Classe représentant un résultat d'analyse.
     """
-    def __init__(self, algo: str, cle: bytes, score_probabilite: float, texte_dechiffre: bytes, temps_execution: float = 0.0, nb_tentatives: int = 0):
+    def __init__(self, algo: str, cle: bytes, score_probabilite: float, texte_dechiffre: bytes, temps_execution: float = 0.0, nb_tentatives: int = 0, fichier: str ='', taux_succes: float = 0.0):
         self.algo = algo
         self.cle = cle
         self.score_probabilite = score_probabilite
         self.texte_dechiffre = texte_dechiffre
         self.temps_execution = temps_execution
         self.nb_tentatives = nb_tentatives
-
+        self.fichier = fichier,
+        self.taux_succes = taux_succes
 class DetecteurCryptoOrchestrateur:
     """
             Classe principale qui centralise tout:
@@ -39,7 +41,7 @@ class DetecteurCryptoOrchestrateur:
         Initialisation de tous les modules d'analyse disponibles 
         """
         self.analyzers: dict[str, CryptoAnalyzer] = {
-            "AES-CBC": Aes_Cbc_Analyzer(),
+            "AES-CBC-256": Aes_Cbc_Analyzer(),
             "ChaCha20": ChaCha20_Analyzer(),
             "Blowfish": Blowfish_Analyzer(),
             "AES-GCM": Aes_Gcm_Analyzer(),
@@ -88,7 +90,7 @@ class DetecteurCryptoOrchestrateur:
                 scores_algorithmes[nom_algo] = score
                 # print(f"{nom_algo}: score {score:.2f}")
                 
-                if score > 0.5:  # Seuil de confiance
+                if score > 0.9 :  # Seuil de confiance
                     algorithme_detecte = nom_algo
                     score_probabilite = score
                     # print(f"Algorithme détecté: {algorithme_detecte} (score: {score:.2f})")
@@ -97,32 +99,35 @@ class DetecteurCryptoOrchestrateur:
             if not algorithme_detecte:
                 print("Aucun algorithme correctement détecté ")
                 temps_execution = time.time() - debut_analyse
-                return ResultatAnalyse("", b"", 0.0, b"", temps_execution, nb_tentatives)
+                return ResultatAnalyse("", b"", 0.0, b"", temps_execution, nb_tentatives, chemin_fichier_chiffre, 0)
             
             temps_execution = time.time() - debut_analyse
             
-            return ResultatAnalyse(algorithme_detecte, cle, score_probabilite, texte_dechiffre, temps_execution, nb_tentatives)
+            return ResultatAnalyse(algorithme_detecte, cle, score_probabilite, texte_dechiffre, temps_execution, nb_tentatives, chemin_fichier_chiffre, 0)
             
         except Exception as e:
             print(f"Erreur lors de l'analyse: {str(e)}")
             temps_execution = time.time() - debut_analyse
-            return ResultatAnalyse("", b"", 0.0, b"", temps_execution, 0)
+            return ResultatAnalyse("", b"", 0.0, b"", temps_execution, 0, chemin_fichier_chiffre)
     
     def __tenter_dechiffrement_avec_dictionnaire(self, chemin_fichier: str, cles_candidates: list[bytes], analyzer: CryptoAnalyzer, resultat: ResultatAnalyse):
         for j, cle in enumerate(cles_candidates):
             resultat.nb_tentatives += 1
                             
             if j % 100 == 0:  # retour visuel tous les 100 essais
-                print(f"   Tentative {j+1}/{len(cles_candidates)}...")
+                print(f"Tentative {j+1}/{len(cles_candidates)}...")
                             
-            texte_dechiffre = analyzer.dechiffrer(chemin_fichier, cle)
-            if texte_dechiffre and est_dechiffre(texte_dechiffre.decode('utf-8')) and len(texte_dechiffre) > 0:
+            texte_dechiffre = analyzer.dechiffrer(chemin_fichier, cle).decode('utf-8')
+            succes =  verifier_texte_dechiffre(texte_dechiffre)['taux_succes']
+            
+            if texte_dechiffre and succes > 60 and len(texte_dechiffre) > 0:
                 resultat.cle = cle
                 resultat.texte_dechiffre = texte_dechiffre
-                print(f"   Clé trouvée après {j+1} tentatives!")
-                break
-        else:
-            print("Aucune clé valide trouvée")
+                resultat.taux_succes = succes
+                print(f"Clé trouvée après {j+1} tentatives!")
+                return 
+        
+        print("Aucune clé valide trouvée")
 
     def mission_complete_automatique(self, dossier_chiffres: str, chemin_dictionnaire: str) -> List[ResultatAnalyse]:
         """
@@ -152,8 +157,9 @@ class DetecteurCryptoOrchestrateur:
             print(f"{len(fichiers_enc)} fichiers .enc détectés")
             print("\nANALYSE SÉQUENTIELLE DES FICHIERS")
             
-            for i, fichier in enumerate(fichiers_enc, 1):
-                print(f"\nFICHIER {i}/{len(fichiers_enc)}: {fichier}")
+            for i, fichier in enumerate(fichiers_enc, 0):
+                
+                print(f"\nFICHIER {i+1}/{len(fichiers_enc)}: {fichier}")
                 
                 chemin_fichier = os.path.join(dossier_chiffres, fichier)
                 
@@ -178,12 +184,23 @@ class DetecteurCryptoOrchestrateur:
                 
                 # retour visuel
                 if resultat.algo:
-                    print(f"{fichier}: {resultat.algo} (score: {resultat.score_probabilite:.2f})")
+                    print(f"{fichier}: {resultat.algo} (score: {resultat.score_probabilite:.2f}) \n\n")
                 else:
                     print(f"{fichier}: Aucun algorithme détecté")
             
             # Rapport de synthèse final
-            generer_rapport_mission().generer_rapport_synthese(resultats, time.time() - debut_mission)
+            for i in range(6) :
+                resultat = {
+                    'algorithme': resultats[i].algo,
+                    'fichier': resultats[i].fichier,
+                    'cle': resultats[i].cle,
+                    'tentatives': resultats[i].nb_tentatives,
+                    'temps_execution': resultats[i].temps_execution,
+                    'taux_succes': resultats[i].taux_succes,
+                    'statut_succes' : 'Succès' if resultats[i].taux_succes > 60 else 'Echec',
+                    'texte_dechiffre' : resultats[i].texte_dechiffre
+                }
+                rapport_mission().generer_rapport_synthese(resultat)
             
             # Mise à jour des statistiques globales
             self.missions_completees.append({
@@ -255,3 +272,4 @@ class DetecteurCryptoOrchestrateur:
             return ResultatAnalyse("", b"", 0.0, b"", temps_execution, 0)
 
 # print(DetecteurCryptoOrchestrateur().analyser_fichier_specifique(f"{os.path.abspath(os.curdir)}\\CryptoForensic-Python\\data\\mission2.enc"))
+
