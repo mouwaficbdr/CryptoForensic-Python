@@ -1,7 +1,6 @@
 # Import des modules
 import hashlib
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms
-from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
 from rich import print
 import os
 import sys
@@ -173,17 +172,7 @@ class ChaCha20_Analyzer(CryptoAnalyzer):
             if len(nonce_12) != self._CHACHA20_LONGUEUR_NONCE or len(payload) == 0:
                 return b""
 
-            # Tentative 1: ChaCha20-Poly1305 (nonce 12B, tag 16B en suffixe)
-            if len(payload) > 16:
-                ct = payload[:-16]
-                tag = payload[-16:]
-                try:
-                    aead = ChaCha20Poly1305(cle_donnee)
-                    return aead.decrypt(nonce_12, ct + tag, None)
-                except Exception:
-                    pass
-
-            # Tentative 2: ChaCha20 stream (cryptography attend un nonce 16B)
+            # ChaCha20 stream (cryptography attend un nonce 16B)
             # Construire un nonce 16B en préfixant 4 octets nuls au nonce 12B
             nonce_16 = b"\x00\x00\x00\x00" + nonce_12
             try:
