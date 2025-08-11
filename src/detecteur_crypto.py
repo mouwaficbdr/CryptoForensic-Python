@@ -72,11 +72,13 @@ class DetecteurCryptoOrchestrateur:
         
         try:
             # Vérification de l'existence du fichier
+            time.sleep(0.3) # TODO : Intégrer la progress bar -> step : Verification du chemin de fichier fourni
             if not os.path.isfile(Path('data')/f"{chemin_fichier_chiffre}"):
                 print("Erreur: Fichier non trouvé")
                 return ResultatAnalyse("", b"", 0.0, b"", 0.0, 0)
             
             # Initialisation des variables
+            time.sleep(0.5) # TODO : Mise à jour de la progress bar -> step : Initialisation des utilitaires pour l'identification
             algorithme_detecte = ""
             cle = b""
             score_probabilite = 0.0
@@ -86,16 +88,21 @@ class DetecteurCryptoOrchestrateur:
             # Parcours des algorithmes disponibles
             scores_algorithmes = {}
             for nom_algo, analyzer in self.analyzers.items():
+                time.sleep(0.5) # TODO : Mise à jour de la progress bar -> step : Utilisation de {algrorithme} pour déterminer le chiffrement
+                
                 score = analyzer.identifier_algo(f"data/{chemin_fichier_chiffre}")
                 scores_algorithmes[nom_algo] = score
+                time.sleep(0.5) # TODO : Mise à jour de la progress bar -> step : Analyse des résultats d'identification
                 # print(f"{nom_algo}: score {score:.2f}")
                 
                 if score > 0.9 :  # Seuil de confiance
+                    time.sleep(1) # TODO : Mise à jour de la progress bar -> step : Détection réussie pour {algorithme} et préparation du rapport d'analyse
                     algorithme_detecte = nom_algo
                     score_probabilite = score
                     # print(f"Algorithme détecté: {algorithme_detecte} (score: {score:.2f})")
                     break
-            
+                else :
+                    pass # TODO : Intégrer la progress bar -> step : Echec d'identification pour {algorithme} 
             if not algorithme_detecte:
                 print("Aucun algorithme correctement détecté ")
                 temps_execution = time.time() - debut_analyse

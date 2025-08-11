@@ -48,6 +48,7 @@ def verifier_texte_dechiffre(texte: str) -> Dict[str, Any]:
             -le pourcentage de mots valide, 
             -les mots non valides et 
             -le pourcentage de ponctuation respecté
+            -le taux de succès du déchiffrement
     """
 
     #Statistiques sur le texte 
@@ -130,6 +131,7 @@ def verifier_texte_dechiffre(texte: str) -> Dict[str, Any]:
     if not nbr_points: nbr_points=1
     stats['ponctuation_valide'] = round(count*100/nbr_points, 2)
     
+    #Evaluation du succès du déchiffrement
     stats['taux_succes'] = round((stats['imprimable'] + stats['p_mots_valide'] + stats['ponctuation_valide']) / 3, 2)
 
     return stats
