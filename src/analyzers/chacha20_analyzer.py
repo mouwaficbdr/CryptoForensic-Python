@@ -87,8 +87,7 @@ class ChaCha20_Analyzer(CryptoAnalyzer):
             print(f"Erreur lors de l'identification de l'algorithme: {e}")
             return 0.0
 
-    def filtrer_dictionnaire_par_indices(self, chemin_dictionnaire: str) -> List[bytes]:
-        # En supposant qu'elle retourne une liste de bytes pour les clés.
+    def __filtrer_dictionnaire_par_indices(self, chemin_dictionnaire: str) -> List[bytes]:
 
         """
             Cette fonction a pour but de filter le fichier de dictionnaire en fonction des différents niveaux d'indices
@@ -160,7 +159,7 @@ class ChaCha20_Analyzer(CryptoAnalyzer):
             # Erreur de déchiffrement (clé incorrecte, format invalide)
             return b""
 
-# L'appel direct a été déplacé dans un bloc if __name__ == "__main__" pour de bonnes pratiques (Mouwafic)
+
 if __name__ == "__main__":
     try:
         resultat_dechiffrement: bytes = ChaCha20_Analyzer().dechiffrer("data/mission2.enc", os.urandom(32))

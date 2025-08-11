@@ -30,9 +30,9 @@ class AesCbcAnalyzerTester(TestCase):
         self.assertAlmostEqual(self.analyser.identifier_algo(self.chemin_fichier_chiffre_invalide), 0)
 
     def test_aes_cbc_filtrage_dict(self):
-        self.assertIsInstance(self.analyser.filtrer_dictionnaire_par_indices(self.wordlist), list)
-        self.assertEqual(self.analyser.filtrer_dictionnaire_par_indices(self.wordlist), ["paris2024"])
-        self.assertEqual(self.analyser.filtrer_dictionnaire_par_indices("chemin_dohi.txt"), [])
+        self.assertIsInstance(self.analyser._Aes_Cbc_Analyzer__filtrer_dictionnaire_par_indice(self.wordlist), list)
+        self.assertEqual(self.analyser._Aes_Cbc_Analyzer__filtrer_dictionnaire_par_indice(self.wordlist), ["paris2024"])
+        self.assertEqual(self.analyser._Aes_Cbc_Analyzer__filtrer_dictionnaire_par_indice("chemin_dohi.txt"), [])
 
     def test_generation_cles_candidate(self):
         self.assertIsInstance(self.analyser.generer_cles_candidates(self.wordlist), list)
@@ -79,9 +79,11 @@ class ChaCha20AnalyzerTester(TestCase):
         self.assertAlmostEqual(self.analyser_chacha.identifier_algo(self.chemin_fichier_chacha_invalide), 0.0, 1)
 
     def test_chacha20_generer_cles_candidates(self):
-        # Comme la fonction filtrer_dictionnaire_par_indices retourne toujours une liste vide,
-        # generer_cles_candidates doit également retourner une liste vide.
-        self.assertEqual(self.analyser_chacha.generer_cles_candidates(self.wordlist), [])
+        # La fonction generer_cles_candidates utilise maintenant __filtrer_dictionnaire_par_indice
+        # et devrait retourner une liste de clés dérivées des mots de passe filtrés
+        resultat = self.analyser_chacha.generer_cles_candidates(self.wordlist)
+        self.assertIsInstance(resultat, list)
+        self.assertTrue(all(isinstance(cle, bytes) for cle in resultat))
 
     def test_chacha20_dechiffrer(self):
         # Test de déchiffrement avec une clé et un nonce valides
@@ -135,10 +137,12 @@ class AesGcmTester(TestCase) :
             self.assertIsInstance(cle, bytes)
     
     def test_aes_gcm_identifier_algo(self):
-        #Vérifie que la probabilité retournée pour le fichier mission3.enc est un float et élevée
+        #Vérifie que la probabilité retournée pour le fichier AES GCM valide est un float et élevée
+        # Une méthode identifier_algo bien implémentée devrait retourner une probabilité élevée (0.8+)
+        # pour un fichier AES GCM valide, pas seulement 0.5
         resultat = self._analyzer.identifier_algo(self._fichier_test)
         self.assertIsInstance(resultat, float)
-        self.assertAlmostEqual(resultat, 0.5, places=1)
+        self.assertAlmostEqual(resultat, 0.8, places=1)  # Corrigé de 0.5 à 0.8
     
     def test_aes_gcm_dechiffrer(self):
         # Créer une clé de test pour le déchiffrement
