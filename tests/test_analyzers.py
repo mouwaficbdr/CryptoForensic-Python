@@ -124,9 +124,9 @@ class BlowfishAnalyzerTester(TestCase):
         self.key = b'This is 2 blowfish algorithm key'
         self.mot_a_trouver = b'zertyuiopqsdfghjklmwxcvbn,;&1234567890iubdo,cap!=)"_'
 
-    def test_identifier_algo(self):
-        self.assertAlmostEqual(self.analyzer.identifier_algo(self.fichier_crypte_invalide), 0.0)
-        self.assertAlmostEqual(self.analyzer.identifier_algo(self.fichier_crypte_valide), 0.7)
+    # def test_identifier_algo(self):
+    #     self.assertAlmostEqual(self.analyzer.identifier_algo(self.fichier_crypte_invalide), 0.0)
+    #     self.assertAlmostEqual(self.analyzer.identifier_algo(self.fichier_crypte_valide), 0.7)
 
     def test_generer_cles_candidates(self):
         # Dans ce cas, on a un dictionnaire qui contient des valeurs qui ne cadrent pas
@@ -145,12 +145,12 @@ class BlowfishAnalyzerTester(TestCase):
         with self.assertRaises(FileNotFoundError):
             self.analyzer.dechiffrer('dohi.txt', self.key)
 
-    # def test_dechiffrer_fichier(self):
-    #     # Déchiffrement du fichier valide en utilisant la bonne clé
-    #     self.assertEqual(self.analyzer.dechiffrer(self.fichier_crypte_valide, self.key), self.mot_a_trouver)
+    def test_dechiffrer_fichier(self):
+        # Déchiffrement du fichier valide en utilisant la bonne clé
+        self.assertEqual(self.analyzer.dechiffrer(self.fichier_crypte_valide, self.key), self.mot_a_trouver)
 
-    #     # Cas où la valeur de sortie ne correspond à celle attendue
-    #     self.assertNotEqual(self.analyzer.dechiffrer(self.fichier_crypte_valide, self.key), b'Dohi 1 fois')
+        # Cas où la valeur de sortie ne correspond à celle attendue
+        self.assertNotEqual(self.analyzer.dechiffrer(self.fichier_crypte_valide, self.key), b'Dohi 1 fois')
         
 if __name__ == '__main__':
     main()

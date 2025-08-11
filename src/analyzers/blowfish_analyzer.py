@@ -21,7 +21,7 @@ class Blowfish_Analyzer(CryptoAnalyzer):
   '''
   
   __BLOWFISH_TAILLE_BLOC = 8
-  __BLOWFISH_TAILLE_IV = 8
+  __BLOWFISH_TAILLE_IV = 12
   
   def identifier_algo(self, chemin_fichier_chiffre: str) -> float:
     '''
