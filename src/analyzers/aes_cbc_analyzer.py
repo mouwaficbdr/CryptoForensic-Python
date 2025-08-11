@@ -64,7 +64,7 @@ class Aes_Cbc_Analyzer(CryptoAnalyzer):
       
     return probabilite
   
-  def filtrer_dictionnaire_par_indices(self, chemin_dictionnaire: str) -> list[str]:
+  def __filtrer_dictionnaire_par_indices(self, chemin_dictionnaire: str) -> list[str]:
     '''
       Filtre le dictionnaire sur la base des indices fournis pour sélectionner uniquement les mots de passe pertinents.
       
@@ -100,7 +100,7 @@ class Aes_Cbc_Analyzer(CryptoAnalyzer):
         list[bytes]: liste des clés candidates. 
     '''
     
-    mots_de_passe_cible = self.filtrer_dictionnaire_par_indices(chemin_dictionnaire)
+    mots_de_passe_cible = self.__filtrer_dictionnaire_par_indices(chemin_dictionnaire)
     
     clees_candidates: list[bytes] = []
     kdf = PBKDF2HMAC(
