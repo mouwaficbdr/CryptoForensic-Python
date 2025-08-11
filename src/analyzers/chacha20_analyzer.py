@@ -1,7 +1,7 @@
 # Import des modules
 import hashlib
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms
 from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
-from cryptography.exceptions import InvalidTag
 from rich import print
 import os
 import sys
@@ -87,25 +87,45 @@ class ChaCha20_Analyzer(CryptoAnalyzer):
             print(f"Erreur lors de l'identification de l'algorithme: {e}")
             return 0.0
 
-    def __filtrer_dictionnaire_par_indices(self, chemin_dictionnaire: str) -> List[bytes]:
+    def __filtrer_dictionnaire_par_indices(self, chemin_dictionnaire: str) -> List[str]:
 
         """
-            Cette fonction a pour but de filter le fichier de dictionnaire en fonction des différents niveaux d'indices
-            pour déterminer les données les plus pertinentes.
+            Filtre le dictionnaire selon les indices de mission pour sélectionner les mots pertinents.
+
+            - Prioritaire: motifs "2024" + mot anglais en minuscules (ex: 2024hello)
+            - Secondaire: 4 chiffres + mot anglais en minuscules (ex: 1337secret)
 
             Args: 
                 chemin_dictionnaire(str): Le chemin vers le dictionnaire fourni 
 
             Returns: 
-                list[bytes]: La liste de tous les mots susceptibles d'être des clés adéquates.
+                List[str]: Les mots candidats conformément aux indices (prioritaires si présents, sinon secondaires).
         """
+        candidats_prioritaires: List[str] = []
+        candidats_secondaires: List[str] = []
+
         try:
-            with open(chemin_dictionnaire, 'rb') as f:
-                cle = f.readlines()
-            return cle
+            with open(chemin_dictionnaire, 'r', encoding='utf-8') as f:
+                for ligne in f:
+                    mot = ligne.strip()
+                    if not mot:
+                        continue
+
+                    # Pattern principal des indices: 2024 + mot anglais simple
+                    if len(mot) >= 6 and mot.startswith('2024') and mot[4:].isalpha() and mot[4:].islower():
+                        candidats_prioritaires.append(mot)
+                        continue
+
+                    # Pattern secondaire: 4 chiffres + mot anglais simple (fallback si aucune clé prioritaire)
+                    if len(mot) >= 6 and mot[:4].isdigit() and mot[4:].isalpha() and mot[4:].islower():
+                        candidats_secondaires.append(mot)
+
         except FileNotFoundError:
             print(f"Erreur : Le fichier de dictionnaire '{chemin_dictionnaire}' est introuvable.")
             return []
+
+        # Retourner d'abord les candidats prioritaires, sinon les secondaires
+        return candidats_prioritaires if candidats_prioritaires else candidats_secondaires
 
     def generer_cles_candidates(self, chemin_dictionnaire: str) -> List[bytes]:
         """
@@ -118,9 +138,17 @@ class ChaCha20_Analyzer(CryptoAnalyzer):
         Returns:
             cles_candidates (List[bytes]) : Un tableau de clés, chaque clé étant une séquence d'octets.
         """
-        # Pour l'instant, retourner une liste vide comme attendu par le test
-        # TODO: Implémenter la logique de génération de clés candidates
-        return []
+        cles_candidates: List[bytes] = []
+
+        # Utiliser la méthode de filtrage harmonisée
+        candidats: List[str] = self.__filtrer_dictionnaire_par_indices(chemin_dictionnaire)
+
+        for cand in candidats:
+            # Dérivation clé: SHA256 du mot de passe (indices)
+            cle = hashlib.sha256(cand.encode('utf-8')).digest()
+            cles_candidates.append(cle)
+
+        return cles_candidates
     
     def dechiffrer(self, chemin_fichier_chiffre: str, cle_donnee: bytes) -> bytes:
         """
@@ -136,26 +164,39 @@ class ChaCha20_Analyzer(CryptoAnalyzer):
         # Validation de la taille de clé (ChaCha20 nécessite 32 bytes)
         if len(cle_donnee) != self._CHACHA20_LONGUEUR_CLE:
             raise ValueError("Erreur : La clé n'a pas la taille correcte")
-            
+
         try:
             with open(chemin_fichier_chiffre, 'rb') as f:
-                nonce: bytes = f.read(self._CHACHA20_LONGUEUR_NONCE)
-                texte_chiffre: bytes = f.read()
+                nonce_12: bytes = f.read(self._CHACHA20_LONGUEUR_NONCE)
+                payload: bytes = f.read()
 
+            if len(nonce_12) != self._CHACHA20_LONGUEUR_NONCE or len(payload) == 0:
+                return b""
+
+            # Tentative 1: ChaCha20-Poly1305 (nonce 12B, tag 16B en suffixe)
+            if len(payload) > 16:
+                ct = payload[:-16]
+                tag = payload[-16:]
+                try:
+                    aead = ChaCha20Poly1305(cle_donnee)
+                    return aead.decrypt(nonce_12, ct + tag, None)
+                except Exception:
+                    pass
+
+            # Tentative 2: ChaCha20 stream (cryptography attend un nonce 16B)
+            # Construire un nonce 16B en préfixant 4 octets nuls au nonce 12B
+            nonce_16 = b"\x00\x00\x00\x00" + nonce_12
             try:
-                aead = ChaCha20Poly1305(cle_donnee)
-                resultat: bytes = aead.decrypt(nonce, texte_chiffre, None)
+                cipher = Cipher(algorithms.ChaCha20(cle_donnee, nonce_16), mode=None)
+                decryptor = cipher.decryptor()
+                resultat: bytes = decryptor.update(payload) + decryptor.finalize()
                 return resultat
-            except Exception as e:
-                # Erreur de déchiffrement (clé incorrecte, tag invalide)
+            except Exception:
                 return b""
 
         except FileNotFoundError:
             raise
-        except InvalidTag:
-            # Erreur de déchiffrement (clé incorrecte, tag invalide)
-            return b""
-        except Exception as e:
+        except Exception:
             # Erreur de déchiffrement (clé incorrecte, format invalide)
             return b""
 
