@@ -3,9 +3,8 @@ from src.utils import calculer_entropie
 import hashlib
 import base64
 import re
-from cryptography.hazmat.primitives.ciphers import Cipher, modes
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.padding import PKCS7
-from cryptography.hazmat.decrepit.ciphers.algorithms import Blowfish
 class Blowfish_Analyzer(CryptoAnalyzer):
   '''Détermine si l'algo blowfish est utilisé, génère des clés et tente de de déchffrer un fichier chiffré en utilisant les clés générées.
   
@@ -72,36 +71,25 @@ class Blowfish_Analyzer(CryptoAnalyzer):
     return score
 
 
-  def __filtrer_dictionnaire_par_indice(self, chemin_dictionnaire: str) -> list[str]:
+  def __filtrer_dictionnaire_par_indices(self, chemin_dictionnaire: str) -> list[str]:
     """
     Filtre le dictionnaire en se basant sur les indices de la mission 3.
     L'indice pointe vers un format de clé "sha + nombre + chiffres simples".
-    
-    Args:
-      chemin_dictionnaire(str): Le chemin vers le fichier de dictionnaire.
-    
-    Returns:
-      list[str]: Une liste de mots de passe filtrés.
     """
     mots_filtres: list[str] = []
-    
-    # Indices pour le préfixe et le suffixe
-    prefixes = ("sha256", "sha384", "sha512", "sha1") 
+    prefixes = ("sha256", "sha384", "sha512", "sha1")
     suffixes = ("123", "456", "789")
-    
+
     try:
       with open(chemin_dictionnaire, "r", encoding="utf-8") as f:
         for ligne in f:
           mot = ligne.strip()
-          
-          # Vérifie si le mot commence par un préfixe et se termine par un suffixe
           if mot.startswith(prefixes) and mot.endswith(suffixes):
             mots_filtres.append(mot)
-            
     except FileNotFoundError:
       print(f"Erreur : Le fichier de dictionnaire '{chemin_dictionnaire}' est introuvable.")
       return []
-    
+
     return mots_filtres
 
   def generer_cles_candidates(self, chemin_dictionnaire: str) -> list[bytes]:
@@ -117,7 +105,7 @@ class Blowfish_Analyzer(CryptoAnalyzer):
     """
     cles_candidates: list[bytes] = []
     # Utilisation de la méthode privée pour filtrer les mots
-    mots_de_passe_cible = self.__filtrer_dictionnaire_par_indice(chemin_dictionnaire)
+    mots_de_passe_cible = self.__filtrer_dictionnaire_par_indices(chemin_dictionnaire)
     
     for mot in mots_de_passe_cible:
         mot_en_bytes = mot.encode("utf-8")
@@ -165,14 +153,13 @@ class Blowfish_Analyzer(CryptoAnalyzer):
       raise ValueError('Taille de clé invalide.')
     
     try:
-    
-      algorithm_blowfish = Blowfish(self.decode_base64(cle_donnee))
-      texte_chiffre = ''
+      # Use the key directly, not base64 decoded
+      algorithm_blowfish = algorithms.Blowfish(cle_donnee)
 
       #Récupération de l'IV et du texte chiffré dans le fichier
       with open(chemin_fichier_chiffre, 'rb') as f:
         donnees = f.read()
-      f.close()
+      
       initialization_vector = donnees[:self.__BLOWFISH_TAILLE_IV]
       texte_chiffre = donnees[self.__BLOWFISH_TAILLE_IV:]
       
@@ -180,8 +167,8 @@ class Blowfish_Analyzer(CryptoAnalyzer):
       cipher = Cipher(algorithm_blowfish, modes.CBC(initialization_vector))
       decrypteur = cipher.decryptor()
 
-      #Suppresseur de padding
-      supresseur_padding = PKCS7(self.__BLOWFISH_TAILLE_BLOC).unpadder()
+      #Suppresseur de padding - PKCS7 uses bits, not bytes
+      supresseur_padding = PKCS7(64).unpadder()  # 64 bits = 8 bytes
       
       #Décriptage des données avec le padding(remplissage aléatoire)
       donnees_chiffrees_avec_padding = decrypteur.update(texte_chiffre) + decrypteur.finalize()

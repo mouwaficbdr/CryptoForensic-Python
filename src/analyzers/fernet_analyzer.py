@@ -85,15 +85,12 @@ class FernetAnalyzer(CryptoAnalyzer):
         
         return score
 
-    def __filtrer_dictionnaire_par_indice(self, chemin_dictionnaire: str) -> List[str]:
+    def __filtrer_dictionnaire_par_indices(self, chemin_dictionnaire: str) -> List[str]:
         """
         Filtre le dictionnaire en se basant sur les indices de la mission 5.
         L'indice pointe vers le format "Phrase complète en français minuscules avec espaces".
         
         Cette méthode cherche des phrases en minuscules de plus de 5 caractères avec au moins un espace.
-        
-        Args:
-            chemin_dictionnaire (str): Le chemin vers le fichier de dictionnaire.
         
         Returns:
             List[str]: Une liste de mots de passe (phrases) filtrés.
@@ -104,17 +101,14 @@ class FernetAnalyzer(CryptoAnalyzer):
             with open(chemin_dictionnaire, "r", encoding="utf-8") as f:
                 for ligne in f:
                     mot = ligne.strip()
-                    
-                    # Vérifie si le mot est en minuscules, contient au moins un espace et a une longueur raisonnable.
                     if mot.islower() and ' ' in mot and len(mot) > 5:
                         mots_filtres.append(mot)
-                        
         except FileNotFoundError:
             print(f"Erreur : Le fichier de dictionnaire '{chemin_dictionnaire}' est introuvable.")
             return []
         
         return mots_filtres
-
+    
     def generer_cles_candidates(self, chemin_dictionnaire: str) -> List[bytes]:
         """
         Génère une liste de clés candidates Fernet (32 octets) en dérivant
@@ -126,7 +120,7 @@ class FernetAnalyzer(CryptoAnalyzer):
         Returns:
             List[bytes]: Une liste des clés candidates.
         """
-        mots_de_passe_cible = self.__filtrer_dictionnaire_par_indice(chemin_dictionnaire)
+        mots_de_passe_cible = self.__filtrer_dictionnaire_par_indices(chemin_dictionnaire)
         cles_candidates: List[bytes] = []
         
         for mot_de_passe in mots_de_passe_cible:

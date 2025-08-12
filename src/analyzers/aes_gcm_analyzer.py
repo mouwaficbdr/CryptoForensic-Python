@@ -1,6 +1,7 @@
 from src.crypto_analyzer import CryptoAnalyzer
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from typing import List
 import re
 
@@ -23,43 +24,30 @@ class Aes_Gcm_Analyzer(CryptoAnalyzer):
   _PBKDF2_ITERATIONS: int = 10000             #Fourni
   _PBKDF2_LONGUEUR_CLE: int = 32              #Longueur de la clé
   
-  def __filtrer_dictionnaire_par_indice(self, chemin_dictionnaire: str) -> List[str]:
+  def __filtrer_dictionnaire_par_indices(self, chemin_dictionnaire: str) -> List[str]:
     """
     Filtre le dictionnaire en se basant sur les indices de la mission 4.
     L'indice pointe vers le format de clé "Acronyme en majuscules + 4 chiffres".
-    
-    Args:
-      chemin_dictionnaire(str): Le chemin vers le fichier de dictionnaire.
-    
-    Returns:
-      list[str]: Une liste de mots de passe filtrés.
     """
     mots_filtres: List[str] = []
-    
-    # L'année courante
-    annee_courante: str = "2024" #Normalement 2025 mais on considère 2024 pour se conformer à la wordlist
-    
-    # Définition du motif d'acronyme de 4 lettres en majuscules
-    # On utilise une expression régulière pour plus de robustesse
+    annee_courante: str = "2024"  # Normalement 2025 mais on considère 2024 pour se conformer à la wordlist
     motif_acronyme = re.compile(r"^[A-Z]{4}$")
-    
+
     try:
         with open(chemin_dictionnaire, "r", encoding="utf-8") as f:
             for ligne in f:
                 mot: str = ligne.strip()
-                
-                # Vérifie si le mot de passe correspond au format de l'indice
-                # ex: NATO2024, UN2024, etc.
                 if mot.endswith(annee_courante):
-                    acronyme: str = mot[:-4] # Extrait la partie acronyme
+                    acronyme: str = mot[:-4]
                     if motif_acronyme.match(acronyme):
                         mots_filtres.append(mot)
-                        
     except FileNotFoundError:
         print(f"Erreur : Le fichier de dictionnaire '{chemin_dictionnaire}' est introuvable.")
         return []
-    
+
     return mots_filtres
+
+  
   
   def generer_cles_candidates(self, chemin_dictionnaire: str) -> List[bytes]:
     '''
@@ -72,7 +60,7 @@ class Aes_Gcm_Analyzer(CryptoAnalyzer):
         list[bytes]: liste des clés candidates. 
     '''
     
-    mots_de_passe_cible: List[str] = self.__filtrer_dictionnaire_par_indice(chemin_dictionnaire)
+    mots_de_passe_cible: List[str] = self.__filtrer_dictionnaire_par_indices(chemin_dictionnaire)
     
     clees_candidates: List[bytes] = []
     
@@ -151,6 +139,11 @@ class Aes_Gcm_Analyzer(CryptoAnalyzer):
         if probabilite >= 0.5:
             probabilite += 0.1
         
+        # Normalisation du score dans [0.0, 1.0]
+        if probabilite > 1.0:
+            probabilite = 1.0
+        if probabilite < 0.0:
+            probabilite = 0.0
         return probabilite
         
     except FileNotFoundError:
@@ -172,8 +165,41 @@ class Aes_Gcm_Analyzer(CryptoAnalyzer):
         bytes: Le contenu déchiffré ou une chaîne vide en cas d'échec.
     """
     try:
-        # TODO: Implémenter la logique de déchiffrement AES GCM
+        # Validation taille de clé: AES-256 => 32 octets
+        if len(cle_donnee) != self._PBKDF2_LONGUEUR_CLE:
+            raise ValueError("Erreur : La clé AES-256 doit faire 32 bytes")
+
+        # Lecture du fichier: nonce (12B) + données + tag (16B)
+        with open(chemin_fichier_chiffre, "rb") as f:
+            donnees = f.read()
+
+        if len(donnees) < 12 + 16:
+            return b""
+
+        nonce = donnees[:12]
+        ciphertext_tag = donnees[12:]
+        if len(ciphertext_tag) < 16:
+            return b""
+        ciphertext = ciphertext_tag[:-16]
+        tag = ciphertext_tag[-16:]
+
+        # Déchiffrement AES-GCM
+        cipher = Cipher(algorithms.AES(cle_donnee), modes.GCM(nonce, tag))
+        decryptor = cipher.decryptor()
+        try:
+            plaintext = decryptor.update(ciphertext) + decryptor.finalize()
+            return plaintext
+        except Exception:
+            # Tag invalide / clé incorrecte
+            return b""
+
+    except FileNotFoundError:
+        raise
+    except ValueError as e:
+        # Erreur de validation de clé
+        if "doit faire 32 bytes" in str(e):
+            raise
         return b""
     except Exception as e:
-        print(f"Erreur lors du déchiffrement: {e}")
+        # Erreur générique
         return b""
