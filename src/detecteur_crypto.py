@@ -3,6 +3,7 @@ import os
 import time
 from typing import List, Union
 from pathlib import Path
+from rich.progress import Progress
 # Import des modules d'analyse
 from src.analyzers.aes_cbc_analyzer import Aes_Cbc_Analyzer
 from src.crypto_analyzer import CryptoAnalyzer
@@ -27,7 +28,7 @@ class ResultatAnalyse:
         self.texte_dechiffre = texte_dechiffre
         self.temps_execution = temps_execution
         self.nb_tentatives = nb_tentatives
-        self.fichier = fichier
+        self.fichier = fichier,
         self.taux_succes = taux_succes
 class DetecteurCryptoOrchestrateur:
     """
@@ -166,7 +167,9 @@ class DetecteurCryptoOrchestrateur:
         for j, cle in enumerate(cles_candidates):
             resultat.nb_tentatives += 1
                                             
-            texte_dechiffre = analyzer.dechiffrer(chemin_fichier, cle).decode('utf-8')
+            # Déchiffrement et normalisation de l'affichage (évite les \x.. et caractères non imprimables)
+            donnees = analyzer.dechiffrer(chemin_fichier, cle)
+            texte_dechiffre = donnees.decode('utf-8', errors='ignore').replace('\x00', ' ')
             succes =  verifier_texte_dechiffre(texte_dechiffre)['taux_succes']
             
             if texte_dechiffre and succes > 60 and len(texte_dechiffre) > 0:
@@ -358,6 +361,47 @@ class DetecteurCryptoOrchestrateur:
             print(f"Erreur lors de l'attaque: {str(e)}")
             temps_execution = time.time() - debut_attaque
             return ResultatAnalyse("", b"", 0.0, b"", temps_execution, 0)
+        
+    def attaque_dictionnaire(self,chemin_fichier_chiffrer: str, algo : str, chemin_dico : str = "keys/wordlist.txt"):
+        
+        with Progress() as progress:
+            analyzer = self.analyzers[algo]
+            
+            cle_candidates = analyzer.generer_cles_candidates(chemin_dico)
 
-# print(DetecteurCryptoOrchestrateur().analyser_fichier_specifique(f"{os.path.abspath(os.curdir)}\\CryptoForensic-Python\\data\\mission2.enc"))
+            with open(chemin_dico,'r') as d:
+                dico = d.readlines()
 
+            with open(f"data/{chemin_fichier_chiffrer}",'rb') as f :
+                texte_chiffrer = f.read()
+
+            task_id = progress.add_task("Testing...",total=len(cle_candidates))
+
+            current_task = 0
+
+            advance = 1
+
+
+            while current_task < len(cle_candidates) :
+                time.sleep(0.5)
+
+                essai_dechiffrage = analyzer.dechiffrer(f"data/{chemin_fichier_chiffrer}", cle_candidates[current_task])
+                
+                if essai_dechiffrage != b"" :
+
+                    progress.update(task_id,advance=len(cle_candidates) - current_task)
+
+                    # Retourner un texte décodé/nettoyé pour affichage propre
+                    return essai_dechiffrage.decode('utf-8', errors='ignore').replace('\x00', ' ')
+                     
+                current_task+=1
+
+                progress.update(task_id,advance=advance)
+
+        
+        return "Aucune clé trouvé"
+
+            # print("\n Process is done ...")
+
+
+print(DetecteurCryptoOrchestrateur().attaque_dictionnaire("mission1.enc","AES-CBC-256"))
