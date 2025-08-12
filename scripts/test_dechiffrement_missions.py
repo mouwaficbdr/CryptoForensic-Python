@@ -88,7 +88,7 @@ def test_dechiffrement_missions() -> None:
                 continue
 
             try:
-                texte = res.decode('utf-8', errors='ignore')
+                texte = res.decode('utf-8')
             except Exception:
                 texte = ''
 
