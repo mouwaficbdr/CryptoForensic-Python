@@ -9,7 +9,7 @@ from rich.prompt import Prompt
 from rich.table import Table
 from rich.progress import Progress
 from pathlib import Path
-from tqdm import tqdm
+# from tqdm import tqdm
 # from detecteur_crypto import Analyser_fichier_uniquement
 # from detecteur_crypto import Analyser_fichier_sequentiels
 from .detecteur_crypto import DetecteurCryptoOrchestrateur
@@ -136,17 +136,29 @@ class consoleInterface:
         self.dynamiqueText("Attaque par dictionnaire manuelle","green")
         self.dynamiqueText("Veuillez entrer le nom du fichier sur lequel l'attaque doit être effectuée","white")
         # time.sleep(0.02)
-        chemin_fichier = self.prompt.ask(":")
-        self.console.clear()
-        self.dynamiqueText("Attaque en cours...","green")
+        pad=0
+        while pad < self.calc_center(":missionN.enc"):
+            print(" ",end="")
+            pad+=1
+        chemin_fichier = self.prompt.ask("")
 
-        self.prompt.ask("Quel algorithm souhaitez-vous appliquer sur ce fichier : ",choices=[])
+        algo = self.prompt.ask("Veuillez saisir l'un des algorithmes suivant pour le déchiffrage",choices=["AES-CBC-256","CHACHA20","BLOWFISH","AES-GCM","FERNET"]).upper()
+
+        self.dynamiqueText("Attaque en cours...","green")
         # time.sleep(0.02)
         # self.console.clear()
-        DetecteurCryptoOrchestrateur().attaque_dictionnaire(f"data/{chemin_fichier}",)
+        print(DetecteurCryptoOrchestrateur().attaque_dictionnaire(chemin_fichier,algo))
+
         self.dynamiqueText("Attaque terminée","green")
-        time.sleep(0.02)
-        self.default_menu()
+
+        print("Veuillez saisir la touche ' Entrer ' afin de retourner au menu principale",end='')
+        esc = input("")
+
+        if esc == "":
+            self.default_menu()
+        else :
+            self.default_menu()
+
 
     def menu_4(self):
         self.console.clear()

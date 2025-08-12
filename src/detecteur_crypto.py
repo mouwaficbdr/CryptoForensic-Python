@@ -404,4 +404,4 @@ class DetecteurCryptoOrchestrateur:
             # print("\n Process is done ...")
 
 
-print(DetecteurCryptoOrchestrateur().attaque_dictionnaire("mission5.enc","FERNET"))
+# print(DetecteurCryptoOrchestrateur().attaque_dictionnaire("mission5.enc","FERNET"))
