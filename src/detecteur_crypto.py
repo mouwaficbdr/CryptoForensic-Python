@@ -405,4 +405,3 @@ class DetecteurCryptoOrchestrateur:
 
 
 print(DetecteurCryptoOrchestrateur().attaque_dictionnaire("mission1.enc","AES-CBC-256"))
-
