@@ -26,11 +26,13 @@ class Aes_Cbc_Analyzer(CryptoAnalyzer):
   
   def identifier_algo(self, chemin_fichier_chiffre: str) -> float:
     '''
-      Détermine la probabilité que l'algo de chiffrement utilisé soit l'aes cbc en:
+      Estime la probabilité que le fichier soit chiffré en AES-CBC.
       
-      - recherchant l'IV en tête
-      - vérifiant si le reste du fichier en dehors de l'IV a une taille multiple de 16 octets
-      - déterminant si l'entropie est assez élevée dans le fichier chiffré (>7.5)
+      Principes:
+      - IV attendu en début de fichier (16 octets), suivi des données chiffrées.
+      - En CBC, le corps (hors IV) est multiple de 16 octets (padding par blocs).
+      - L'entropie élevée est un indicateur secondaire (faible poids).
+      - On pénalise un motif typique AES-GCM (nonce 12B + tag 16B + corps non multiple de 16).
       
       Args:
         chemin_fichier_chiffre(str): Le chemin du fichier chiffré à traiter (mission1.enc).
@@ -43,6 +45,7 @@ class Aes_Cbc_Analyzer(CryptoAnalyzer):
       with open(chemin_fichier_chiffre, "rb") as f:
         contenu_fichier = f.read()
 
+        # Garde simple: impossible d'avoir IV (16B) si le fichier est trop court
         if len(contenu_fichier) < 16:
           return 0.0
 
@@ -51,18 +54,19 @@ class Aes_Cbc_Analyzer(CryptoAnalyzer):
 
         score: float = 0.0
 
-        # CBC: taille des données chiffrées multiple de 16
+        # CBC: le corps doit être multiple de 16 (car padding par blocs de 16)
         if len(corps) % 16 == 0 and len(corps) > 0:
           score += 0.55
         else:
           score -= 0.25
 
-        # Entropie globale des données
+        # Entropie globale des données (indicateur secondaire, on ajoute un bonus léger)
         ent = calculer_entropie(corps)
         if ent > 7.3:
           score += 0.35
 
-        # Négatifs structure GCM: nonce 12B au début + tag 16B à la fin et corps non-multiple de 16
+        # Négatif contre GCM: motif nonce 12B au début + tag 16B à la fin + corps non multiple de 16
+        # Si ce motif est détecté, cela contredit CBC → forte pénalité
         if len(contenu_fichier) >= 28:
           from src.utils import calculer_entropie as entf
           nonce12 = contenu_fichier[:12]
@@ -73,7 +77,7 @@ class Aes_Cbc_Analyzer(CryptoAnalyzer):
           ):
             score -= 0.60
 
-        # Clamp [0,1]
+        # Normalisation: on borne toujours le score dans [0, 1]
         if score < 0.0:
           score = 0.0
         if score > 1.0:
