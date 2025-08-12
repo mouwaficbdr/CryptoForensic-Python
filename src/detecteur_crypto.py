@@ -167,7 +167,9 @@ class DetecteurCryptoOrchestrateur:
         for j, cle in enumerate(cles_candidates):
             resultat.nb_tentatives += 1
                                             
-            texte_dechiffre = analyzer.dechiffrer(chemin_fichier, cle).decode('utf-8')
+            # Déchiffrement et normalisation de l'affichage (évite les \x.. et caractères non imprimables)
+            donnees = analyzer.dechiffrer(chemin_fichier, cle)
+            texte_dechiffre = donnees.decode('utf-8', errors='ignore').replace('\x00', ' ')
             succes =  verifier_texte_dechiffre(texte_dechiffre)['taux_succes']
             
             if texte_dechiffre and succes > 60 and len(texte_dechiffre) > 0:
@@ -389,7 +391,8 @@ class DetecteurCryptoOrchestrateur:
 
                     progress.update(task_id,advance=len(cle_candidates) - current_task)
 
-                    return essai_dechiffrage
+                    # Retourner un texte décodé/nettoyé pour affichage propre
+                    return essai_dechiffrage.decode('utf-8', errors='ignore').replace('\x00', ' ')
                      
                 current_task+=1
 
@@ -401,5 +404,4 @@ class DetecteurCryptoOrchestrateur:
             # print("\n Process is done ...")
 
 
-# print(DetecteurCryptoOrchestrateur().attaque_dictionnaire("mission1.enc","Fernet"))
-
+print(DetecteurCryptoOrchestrateur().attaque_dictionnaire("mission1.enc","AES-CBC-256"))
