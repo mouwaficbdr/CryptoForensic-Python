@@ -14,7 +14,7 @@ from src.analyzers.fernet_analyzer import FernetAnalyzer
 from src.rapport_mission import rapport_mission
 # Import des modules utilitaries
 from src.utils import verifier_texte_dechiffre
-from rich.progress import Progress
+from rich.progress import Progress, TaskID
 from rich.markdown import Markdown
 from rich.console import Console
 class ResultatAnalyse:
@@ -47,10 +47,10 @@ class DetecteurCryptoOrchestrateur:
         """
         self.analyzers: dict[str, CryptoAnalyzer] = {
             "AES-CBC-256": Aes_Cbc_Analyzer(),
-            "CHACHA20": ChaCha20_Analyzer(),
-            "BLOWFISH": Blowfish_Analyzer(),
+            "ChaCha20": ChaCha20_Analyzer(),
+            "Blowfish": Blowfish_Analyzer(),
             "AES-GCM": Aes_Gcm_Analyzer(),
-            "FERNET": FernetAnalyzer(),
+            "Fernet": FernetAnalyzer(),
         }
         self.missions_completees: list[dict[str, Union[str, list[ResultatAnalyse], float]]]  = []
         self.statistiques_globales: dict[str, Union[int, float]] = {
@@ -59,8 +59,13 @@ class DetecteurCryptoOrchestrateur:
             "temps_total": 0.0,
             "tentatives_total": 0
         }
-
-    def analyser_fichier_specifique(self, chemin_fichier_chiffre: str, progress : Progress, task, error:bool, nbr_opr_mission: int) -> ResultatAnalyse:
+    
+    def maj_progress_bar(self, sleep_avant: float, progress: Progress, task: TaskID, message: str, avance: float, sleep_apres: float):
+        time.sleep(sleep_avant)
+        progress.update(task_id=task, description=message, advance=avance)
+        time.sleep(sleep_apres)
+        
+    def analyser_fichier_specifique(self, chemin_fichier_chiffre: str, progress : Progress, task, error:bool, nbr_opr_mission: int) -> List[ResultatAnalyse] :
         """
         ANALYSE D'UN FICHIER SPÉCIFIQUE
         - Sélection du fichier à analyser
@@ -75,29 +80,26 @@ class DetecteurCryptoOrchestrateur:
             ResultatAnalyse: résultat de l'analyse
         """
         debut_analyse = time.time()
-        
+        algorithme_potenciel = []
         try:
             # Vérification de l'existence du fichier
             avance = (100/(self._NBR_OPERATION_ANALYSE * nbr_opr_mission))
-            time.sleep(0.3) # Done : Intégrer la progress bar -> step : Verification du chemin de fichier fourni
-            progress.update(task_id=task, description="Verification du chemin de fichier fourni", advance=avance * 0.3)
-            time.sleep(1)
+            # Done : Intégrer la progress bar -> step : Verification du chemin de fichier fourni
+            self.maj_progress_bar(0.3, progress, task, "Verification du chemin de fichier fourni", avance * 0.3, 1) 
             
             if not os.path.isfile(Path('data')/f"{chemin_fichier_chiffre}"):
-                time.sleep(0.3) # TODO : Intégrer la progress bar -> step : Verification du chemin de fichier fourni
-                progress.update(task_id=task, description="Fichier non trouvé ❌ (Aborting...)", advance=((avance * self._NBR_OPERATION_ANALYSE) - avance * 0.3) )
-                time.sleep(1)
+                
+                # TODO : Intégrer la progress bar -> step : Verification du chemin de fichier fourni (Done)
+                self.maj_progress_bar(0.3, progress, task, "Fichier non trouvé ❌ (Aborting...)", ((avance * self._NBR_OPERATION_ANALYSE) - avance * 0.3), 1) 
+                
                 error = True
-                return ResultatAnalyse("", b"", 0.0, b"", 0.0, 0)
+                return [ResultatAnalyse("", b"", 0.0, b"", 0.0, 0)]
             
             # Initialisation des variables
-            time.sleep(0.5) # TODO : Mise à jour de la progress bar -> step : Initialisation des utilitaires pour l'identification
-            progress.update(task_id=task, description="Initialisation des utilitaires pour l'identification", advance=avance*0.2)
-            time.sleep(1)
+            # TODO : Mise à jour de la progress bar -> step : Initialisation des utilitaires pour l'identification (Done)
+            self.maj_progress_bar(0.5, progress, task, "Initialisation des utilitaires pour l'identification", avance*0.2, 1)
 
-            algorithme_detecte = ""
             cle = b""
-            score_probabilite = 0.0
             texte_dechiffre = b""
             nb_tentatives = 0
             
@@ -109,47 +111,52 @@ class DetecteurCryptoOrchestrateur:
             
             for nom_algo, analyzer in self.analyzers.items():
                 avance_algo = avance/(len(self.analyzers)*3 * 0.5)
-                time.sleep(0.5) # TODO : Mise à jour de la progress bar -> step : Utilisation de {algrorithme} pour déterminer le chiffrement
-                progress.update(task_id=task, description=f"Utilisation de {nom_algo} pour déterminer le chiffrement", advance=avance_algo)
-                time.sleep(1)
+                
+                # TODO : Mise à jour de la progress bar -> step : Utilisation de {algrorithme} pour déterminer le chiffrement (Done)
+                self.maj_progress_bar(0.5, progress, task, f"Utilisation de {nom_algo} pour déterminer le chiffrement", avance_algo, 1)
 
                 score = analyzer.identifier_algo(f"data/{chemin_fichier_chiffre}")
                 scores_algorithmes[nom_algo] = score
                 
-                time.sleep(0.5) # TODO : Mise à jour de la progress bar -> step : Analyse des résultats d'identification
-                progress.update(task_id=task, description="Analyse des résultats d'identification", advance=avance_algo)
-                time.sleep(1)
+                # TODO : Mise à jour de la progress bar -> step : Analyse des résultats d'identification (Done)
+                self.maj_progress_bar(0.5, progress, task, "Analyse des résultats d'identification", avance_algo, 1)
 
                 cumul_progress_avance += 2 * avance_algo
                 
-                if score > 0.9 :  # Seuil de confiance
-                    time.sleep(1) # TODO : Mise à jour de la progress bar -> step : Détection réussie pour {algorithme} et préparation du rapport d'analyse
-                    progress.update(task_id=task, description=f"Détection réussie pour {nom_algo} et préparation du rapport d'analyse", advance=((100/nbr_opr_mission) - cumul_progress_avance))
-                    time.sleep(1)
+                if score >= 0.6 :  # Seuil de confiance
                     
-                    algorithme_detecte = nom_algo
-                    score_probabilite = score
-                    break
+                    algorithme_potenciel.append({
+                        'algo': nom_algo,
+                        'score': score
+                    })
+                    
+                    # TODO : Mise à jour de la progress bar -> step : Détection réussie pour {algorithme} et préparation du rapport d'analyse (Done)
+                    self.maj_progress_bar(1, progress, task, f"Elligibilité détectée pour {nom_algo}", avance_algo, 1)
+                    
                 else :
-                    time.sleep(1) # TODO : Intégrer la progress bar -> step : Echec d'identification pour {algorithme}
-                    progress.update(task_id=task, description=f"Echec d'identification pour {nom_algo}", advance=avance_algo)
-                    time.sleep(1)
+                    # TODO : Intégrer la progress bar -> step : Echec d'identification pour {algorithme} (Done)
+                    self.maj_progress_bar(1, progress, task, f"Echec d'identification pour {nom_algo}", avance_algo, 1)
+
                     cumul_progress_avance += avance_algo
  
-            if not algorithme_detecte:
+            if not algorithme_potenciel:
                 print("Aucun algorithme correctement détecté ")
                 temps_execution = time.time() - debut_analyse
-                return ResultatAnalyse("", b"", 0.0, b"", temps_execution, nb_tentatives, chemin_fichier_chiffre, 0)
+                return [ResultatAnalyse("", b"", 0.0, b"", temps_execution, nb_tentatives, chemin_fichier_chiffre, 0)]
             
             temps_execution = time.time() - debut_analyse
             
-            return ResultatAnalyse(algorithme_detecte, cle, score_probabilite, texte_dechiffre, temps_execution, nb_tentatives, chemin_fichier_chiffre, 0)
+            resultat : List[ResultatAnalyse]= []
+            for item in algorithme_potenciel:
+                resultat.append(ResultatAnalyse(item['algo'], cle, item['score'], texte_dechiffre, temps_execution, nb_tentatives, chemin_fichier_chiffre, 0))
             
+            return resultat
+        
         except Exception as e:
             print(f"Erreur lors de l'analyse: {str(e)}")
             temps_execution = time.time() - debut_analyse
             error = True
-            return ResultatAnalyse("", b"", 0.0, b"", temps_execution, 0, chemin_fichier_chiffre)
+            return [ResultatAnalyse("", b"", 0.0, b"", temps_execution, 0, chemin_fichier_chiffre)]
     
     def __tenter_dechiffrement_avec_dictionnaire(self, chemin_fichier: str, cles_candidates: list[bytes], analyzer: CryptoAnalyzer, resultat: ResultatAnalyse):
         """
@@ -213,7 +220,7 @@ class DetecteurCryptoOrchestrateur:
                 for i, fichier in enumerate(fichiers_enc, 0):
                     print(f"\nFICHIER {i+1}/{len(fichiers_enc)}: {fichier}")
                     
-                    # TODO: New progress bar -> step: Analyse du fichier mission{i+1}.enc
+                    # TODO: New progress bar -> step: Analyse du fichier mission{i+1}.enc (Done)
                     task = progress.add_task(f"Analyse du fichier mission{i+1}.enc...", total=100)
                     time.sleep(0.5)
                     
@@ -221,59 +228,68 @@ class DetecteurCryptoOrchestrateur:
                     
                     # Analyse du fichier
                     error = False
-                    resultat = self.analyser_fichier_specifique(fichier, progress, task, error, self._NBR_OPERATION_MISSION)
-                    
+                    resultats_analyse = self.analyser_fichier_specifique(fichier, progress, task, error, self._NBR_OPERATION_MISSION)
+                    cumul_avance : float = 0
+
+                    print('analyzed')
                     # Tentative de déchiffrement si algorithme détecté
-                    if resultat.algo:
-                        # TODO: MAJ de la progress bar -> step: Amorçage de la phase de déchiffrement
-                        progress.update(task, description="Amorçage de la phase de déchiffrement...", advance=((100/self._NBR_OPERATION_MISSION) * 0.5))
-                        time.sleep(1)
-                        
-                        analyzer = self.analyzers[resultat.algo]
-                        
-                        # TODO: MAJ de la progress bar -> step: Récupération des clés candidates
-                        progress.update(task, description="Récupération des clés candidates", advance=(100/self._NBR_OPERATION_MISSION)*0.5)
-                        time.sleep(1)
-
-                        cles_candidates = analyzer.generer_cles_candidates(chemin_dictionnaire)
-                        
-                        if cles_candidates:
-                            print(f"Test de {len(cles_candidates)} clés candidates...")
-                            # TODO: MAJ de la progress bar -> step: Test de déchiffrement
-                            progress.update(task, description="Test de déchiffrement", advance=(100/self._NBR_OPERATION_MISSION))
-                            time.sleep(3)
-                        
-                            error = self.__tenter_dechiffrement_avec_dictionnaire(chemin_fichier, cles_candidates, analyzer, resultat) 
+                    for resultat in resultats_analyse :
+                        if resultat.algo:
+                            avancement = (100/(self._NBR_OPERATION_MISSION * len(resultats_analyse)))
+                            # TODO: MAJ de la progress bar -> step: Amorçage de la phase de déchiffrement (Done)
+                            self.maj_progress_bar(0, progress, task, f"Amorçage de la phase de déchiffrement avec {resultat.algo}...", avancement * 0.5, 1)
+                                                    
+                            analyzer = self.analyzers[resultat.algo]
                             
-                        else:
-                            # TODO: MAJ de la progress bar -> step: Abort et récupération des résultats d'analyse
-                            progress.update(task, description="Aucune clé candidate générée ❌ (Aborting ...)", advance=(100/self._NBR_OPERATION_MISSION))
-                            time.sleep(3)
-                            error = True
+                            # TODO: MAJ de la progress bar -> step: Récupération des clés candidates (Done)
+                            self.maj_progress_bar(0, progress, task, f"Récupération des clés candidates pour {resultat.algo}...", avancement*0.5, 1)
 
+                            cles_candidates = analyzer.generer_cles_candidates(chemin_dictionnaire)
+                            cumul_avance += avancement
+                            
+                            if cles_candidates:
+                                print(f"Test de {len(cles_candidates)} clés candidates...")
+                                
+                                # TODO: MAJ de la progress bar -> step: Test de déchiffrement (Done)
+                                self.maj_progress_bar(0, progress, task, f"Test de déchiffrement pour {resultat.algo}...", avancement * 0.5, 3)
+                            
+                                error = self.__tenter_dechiffrement_avec_dictionnaire(chemin_fichier, cles_candidates, analyzer, resultat) 
+                                
+                                #Cas de déchiffrement réussi
+                                if not error : 
+                                    # TODO: MAJ de la progress bar -> step: Déchiffrement réussi pour {algorithme}
+                                    self.maj_progress_bar(0.5, progress, task, f"Déchiffrement réussi pour {resultat.algo}", (100/self._NBR_OPERATION_MISSION) - cumul_avance , 2)
+                                    
+                                    resultat_final : ResultatAnalyse = resultat
+                                    break
+                                else : 
+                                    self.maj_progress_bar(0.5, progress, task, f"Echec de déchiffrement pour {resultat.algo} ❌", avancement * 0.5, 2)
+                            else :
+                                # TODO: MAJ de la progress bar -> step: Abort et récupération des résultats d'analyse (Done)
+                                self.maj_progress_bar(0, progress, task, "Aucune clé candidate générée ❌ (Aborting ...)", avancement, 3)
+                                error = True
                     
-                    resultats.append(resultat)
+                    resultats.append(resultat_final)
                     
                     # retour visuel
-                    if resultat.algo:
-                        # TODO: MAJ de la progress bar -> step: Finalsation et retour de résultats
-                        progress.update(task, description="Finalisation et retour des résultats", advance=(100/self._NBR_OPERATION_MISSION))
-                        time.sleep(3)
+                    if resultat_final.algo:
+                        # TODO: MAJ de la progress bar -> step: Finalsation et retour de résultats (Done)
+                        self.maj_progress_bar(0, progress, task, "Finalisation et retour des résultats", 100, 3)
                         
-                        print(f"{fichier}: {resultat.algo} (score: {resultat.score_probabilite:.2f})")
+                        print(f"{fichier}: {resultat_final.algo} (score: {resultat_final.score_probabilite:.2f})")
                         
                         message = "[bold green] Mission terminée. ✅[/bold green]\n\n" if not error else "[bold red] Mission terminée: Déchiffrement non concluant. ❌ [/bold red]\n\n"
                         Console().print(message)
                     else:
-                        progress.update(task, description="Aborting et récupération des résultats d'analyse...", advance=100)
-                        time.sleep(0.5)  # TODO: MAJ de la progress bar -> step: Abort et récupération des résultats d'analyse
+                        # TODO: MAJ de la progress bar -> step: Abort et récupération des résultats d'analyse (Done)
+                        self.maj_progress_bar(0, progress, task, "Aborting et récupération des résultats d'analyse...", 100, 0.5)
                         Console().print(f"[bold yellow] Mission terminée: Aucun algorithme détecté. ⚠️[/bold yellow]\n\n")
                     
                     progress.remove_task(task)
                 
                 # Rapport de synthèse final
                 with Progress() as progress :
-                    task = progress.add_task("Préparation des rapports", total=100) # TODO: New progress bar -> step: Préparation des rapports (1 to 100%)
+                    task = progress.add_task("Préparation des rapports", total=100) # TODO: New progress bar -> step: Préparation des rapports (1 to 100%) (Done)
                     
                     while not progress.finished :
                         progress.update(task, description="Préparation des rapports", advance=2)
@@ -290,7 +306,7 @@ class DetecteurCryptoOrchestrateur:
                             'texte_dechiffre' : resultats[i].texte_dechiffre
                         }
                         rapport_mission().generer_rapport_synthese(resultat)
-                        progress.update(task, description="Mission complète effectuée.") # TODO: MAJ de la progress bar -> step: Mission complète effectuée
+                        progress.update(task, description="Mission complète effectuée.") # TODO: MAJ de la progress bar -> step: Mission complète effectuée (Done)
 
                 # Mise à jour des statistiques globales
                 self.missions_completees.append({
@@ -404,4 +420,4 @@ class DetecteurCryptoOrchestrateur:
             # print("\n Process is done ...")
 
 
-# print(DetecteurCryptoOrchestrateur().attaque_dictionnaire("mission5.enc","FERNET"))
+print(DetecteurCryptoOrchestrateur().attaque_dictionnaire("mission1.enc","AES-CBC-256"))
