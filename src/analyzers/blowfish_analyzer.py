@@ -1,7 +1,9 @@
-from ..detecteur_crypto import CryptoAnalyzer
-from ..utils import calculer_entropie
+from src.crypto_analyzer import CryptoAnalyzer
+from src.utils import calculer_entropie
 import hashlib
-from cryptography.hazmat.primitives.ciphers import algorithms, Cipher, modes
+import base64
+import re
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.padding import PKCS7
 class Blowfish_Analyzer(CryptoAnalyzer):
   '''Détermine si l'algo blowfish est utilisé, génère des clés et tente de de déchffrer un fichier chiffré en utilisant les clés générées.
@@ -17,7 +19,7 @@ class Blowfish_Analyzer(CryptoAnalyzer):
 
   '''
   
-  __BLOWFISH_TAILLE_BLOC = 8
+  __BLOWFISH_TAILLE_BLOC = 64
   __BLOWFISH_TAILLE_IV = 8
   
   def identifier_algo(self, chemin_fichier_chiffre: str) -> float:
@@ -69,36 +71,25 @@ class Blowfish_Analyzer(CryptoAnalyzer):
     return score
 
 
-  def __filtrer_dictionnaire_par_indice(self, chemin_dictionnaire: str) -> list[str]:
+  def __filtrer_dictionnaire_par_indices(self, chemin_dictionnaire: str) -> list[str]:
     """
     Filtre le dictionnaire en se basant sur les indices de la mission 3.
     L'indice pointe vers un format de clé "sha + nombre + chiffres simples".
-    
-    Args:
-      chemin_dictionnaire(str): Le chemin vers le fichier de dictionnaire.
-    
-    Returns:
-      list[str]: Une liste de mots de passe filtrés.
     """
     mots_filtres: list[str] = []
-    
-    # Indices pour le préfixe et le suffixe
-    prefixes = ("sha256", "sha384", "sha512", "sha1") 
+    prefixes = ("sha256", "sha384", "sha512", "sha1")
     suffixes = ("123", "456", "789")
-    
+
     try:
       with open(chemin_dictionnaire, "r", encoding="utf-8") as f:
         for ligne in f:
           mot = ligne.strip()
-          
-          # Vérifie si le mot commence par un préfixe et se termine par un suffixe
           if mot.startswith(prefixes) and mot.endswith(suffixes):
             mots_filtres.append(mot)
-            
     except FileNotFoundError:
       print(f"Erreur : Le fichier de dictionnaire '{chemin_dictionnaire}' est introuvable.")
       return []
-    
+
     return mots_filtres
 
   def generer_cles_candidates(self, chemin_dictionnaire: str) -> list[bytes]:
@@ -114,7 +105,7 @@ class Blowfish_Analyzer(CryptoAnalyzer):
     """
     cles_candidates: list[bytes] = []
     # Utilisation de la méthode privée pour filtrer les mots
-    mots_de_passe_cible = self.__filtrer_dictionnaire_par_indice(chemin_dictionnaire)
+    mots_de_passe_cible = self.__filtrer_dictionnaire_par_indices(chemin_dictionnaire)
     
     for mot in mots_de_passe_cible:
         mot_en_bytes = mot.encode("utf-8")
@@ -132,6 +123,18 @@ class Blowfish_Analyzer(CryptoAnalyzer):
     
     return cles_candidates
     
+  def decode_base64(self, encoded_bytes, altchars=b'+/'):
+    encoded_bytes = re.sub(
+        rb'[^a-zA-Z0-9%s]+' %
+        altchars, b'', encoded_bytes)
+
+    missing_padding_length = len(encoded_bytes) % 4
+
+    if missing_padding_length:
+        encoded_bytes += b'=' * (4 - missing_padding_length)
+
+    return base64.b64decode(encoded_bytes, altchars)
+  
   def dechiffrer(self, chemin_fichier_chiffre: str, cle_donnee: bytes) -> bytes:
     """
     Déchiffre le fichier supposé crypté par l'algorithme blowfish avec la clé donnée en respectant les critères de 
@@ -145,27 +148,27 @@ class Blowfish_Analyzer(CryptoAnalyzer):
       bytes: les données originales 
     """
     
-    #La taille de clé est dans l'intervalle 32-448bits et est multiple de 8
-    if len(cle_donnee) not in range(32, 448, 8):
+    #La taille de clé est dans l'intervalle 4-56 bytes (32-448 bits)
+    if len(cle_donnee) < 4 or len(cle_donnee) > 56:
       raise ValueError('Taille de clé invalide.')
     
     try:
-      
+      # Use the key directly, not base64 decoded
       algorithm_blowfish = algorithms.Blowfish(cle_donnee)
-      texte_chiffre = ''
 
-      #Récupération de l'IV et des texte chiffré das le fichier
+      #Récupération de l'IV et du texte chiffré dans le fichier
       with open(chemin_fichier_chiffre, 'rb') as f:
-        initialization_vector = f.read(self.__BLOWFISH_TAILLE_IV)
-        texte_chiffre = f.read()
-      f.close()
+        donnees = f.read()
+      
+      initialization_vector = donnees[:self.__BLOWFISH_TAILLE_IV]
+      texte_chiffre = donnees[self.__BLOWFISH_TAILLE_IV:]
       
       #Initialisation du cipher
       cipher = Cipher(algorithm_blowfish, modes.CBC(initialization_vector))
       decrypteur = cipher.decryptor()
 
-      #Suppresseur de padding
-      supresseur_padding = PKCS7(self.__BLOWFISH_TAILLE_BLOC).unpadder()
+      #Suppresseur de padding - PKCS7 uses bits, not bytes
+      supresseur_padding = PKCS7(64).unpadder()  # 64 bits = 8 bytes
       
       #Décriptage des données avec le padding(remplissage aléatoire)
       donnees_chiffrees_avec_padding = decrypteur.update(texte_chiffre) + decrypteur.finalize()
@@ -176,5 +179,19 @@ class Blowfish_Analyzer(CryptoAnalyzer):
       
     except FileNotFoundError:
       raise
+    except ValueError as e:
+      # Erreur de déchiffrement (clé incorrecte, padding invalide)
+      return b""
+    except Exception as e:
+      # Erreur critique inattendue
+      raise RuntimeError(f"Erreur critique lors du déchiffrement Blowfish: {e}")
     
 
+# if __name__ == "__main__":
+#     try:
+#         resultat_dechiffrement: bytes = Blowfish_Analyzer().dechiffrer("CryptoForensic-Python/data/mission3.enc", os.urandom(32))
+#         print(f"Résultat du déchiffrement : {resultat_dechiffrement.decode('utf-8')}")
+#     except ValueError as ve:
+#         print(ve)
+#     except FileNotFoundError:
+#         print("Erreur: Le fichier 'mission2.enc' est introuvable.")

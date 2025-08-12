@@ -1,3 +1,4 @@
+import re
 from rich.console import Console
 from rich.traceback import install
 from rich.markdown import Markdown
@@ -9,6 +10,7 @@ from pathlib import Path
 # from detecteur_crypto import Analyser_fichier_uniquement
 # from detecteur_crypto import Analyser_fichier_sequentiels
 from .detecteur_crypto import DetecteurCryptoOrchestrateur
+from .rapport_mission import rapport_mission
 import time, os
 
 install()
@@ -94,7 +96,7 @@ class consoleInterface:
         print(f"\n[bold]Score de probabilité[/bold] : [green]{data.score_probabilite}[/green]")
         # print(data.texte_dechiffre)
         print(f"\n[bold]Temps d'éxécution[/bold] : [green]{round(data.temps_execution,4)}[/green] s")
-        esc=input("Veuillez appuyer sur la touche entrer pour retrouner au menu principal")
+        esc=input("Veuillez appuyer sur la touche entrer pour retourner au menu principal")
         if esc=="":
             self.default_menu()
         else : self.default_menu()
@@ -107,14 +109,24 @@ class consoleInterface:
         self.dynamiqueText("Mission complète automatique","green")
         self.dynamiqueText("Veuillez entrer le chemin du dossier :","white")
         time.sleep(0.02)
-        # chemin_dossier = self.prompt.ask("Veuillez entrer le chemin du dossier : ")
-        self.console.clear()
+        
+        chemin_dossier = self.prompt.ask("Veuillez entrer le chemin du dossier : ")
+        resultat = DetecteurCryptoOrchestrateur().mission_complete_automatique(chemin_dossier, "keys/wordlist.txt")
+        print(line for line in resultat)
+        # self.console.clear()
         self.dynamiqueText("Mission en cours...","green")
         time.sleep(0.02)
-        self.console.clear()
+        # self.console.clear()
         self.dynamiqueText("Mission terminée","green")
+        
+        esc=input("Veuillez appuyer sur la touche entrer pour retourner au menu principal")
         time.sleep(0.02)
-        self.default_menu()
+        
+        if esc=="":
+            self.default_menu()
+        else : self.default_menu()
+        
+        # self.default_menu()
 
     def menu_3(self):
         self.console.clear()
@@ -134,15 +146,26 @@ class consoleInterface:
         self.console.clear()
         self.dynamiqueText("Affichage des rapports","green")
         time.sleep(0.02)
-        f = open("rapport_mission.txt",'r')
-        rapports = f.read()
-        for rapport in rapports:
-            print(f"\n{rapport}")
-        f.close()
+        date = input("Quel est la date du rapport que vous souhaitez? Entrez 'all' pour tous les rapports. (format: jj/mm/aa): ")
+        
+        rapports = []
+        if date == "all" :
+            with open("rapport_mission.txt",'r') as f :
+                rapports = f.readlines()
+            f.close()
+        elif re.match(r"\d+/\d+/\d+", date) :
+            rapports = rapport_mission().recuperer_ancien_rapport(date)
+            
+        if rapports :
+            for rapport in rapports:
+                print(f"\n{rapport.replace('~', '\n')}")
+        else :
+            self.console.print(Markdown('#### Aucun rapport trouvé.'))
+        
+        time.sleep(0.03)
         esc = input('Veuillez appuyez sur la touche entrer pour continuer')
-        if esc=='': 
+        if esc=="": 
             self.default_menu()
-        else: self.default_menu()
 
     def menu_5(self):
         self.console.clear()
@@ -207,4 +230,4 @@ class consoleInterface:
         time.sleep(2)
         self.console.clear()
         
-consoleInterface()
+# consoleInterface()

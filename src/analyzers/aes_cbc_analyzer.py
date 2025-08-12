@@ -1,5 +1,5 @@
-from ..crypto_analyzer import CryptoAnalyzer
-from ..utils import calculer_entropie
+from src.crypto_analyzer import CryptoAnalyzer
+from src.utils import calculer_entropie
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
@@ -64,7 +64,7 @@ class Aes_Cbc_Analyzer(CryptoAnalyzer):
       
     return probabilite
   
-  def filtrer_dictionnaire_par_indices(self, chemin_dictionnaire: str) -> list[str]:
+  def __filtrer_dictionnaire_par_indices(self, chemin_dictionnaire: str) -> list[str]:
     '''
       Filtre le dictionnaire sur la base des indices fournis pour sélectionner uniquement les mots de passe pertinents.
       
@@ -100,7 +100,7 @@ class Aes_Cbc_Analyzer(CryptoAnalyzer):
         list[bytes]: liste des clés candidates. 
     '''
     
-    mots_de_passe_cible = self.filtrer_dictionnaire_par_indices(chemin_dictionnaire)
+    mots_de_passe_cible = self.__filtrer_dictionnaire_par_indices(chemin_dictionnaire)
     
     clees_candidates: list[bytes] = []
     kdf = PBKDF2HMAC(
@@ -132,6 +132,10 @@ class Aes_Cbc_Analyzer(CryptoAnalyzer):
         initialization_vector = f.read(16)
         donnees_chiffrees = f.read()
         
+        # Validation de la taille de clé (AES-256 nécessite 32 bytes)
+        if len(cle_donnee) != 32:
+            raise ValueError("Erreur : La clé AES-256 doit faire 32 bytes")
+        
         try:
           #Création de l'objet Cipher pour le déchiffrage
           algorithm_aes = algorithms.AES256(cle_donnee)
@@ -149,8 +153,15 @@ class Aes_Cbc_Analyzer(CryptoAnalyzer):
           
           return donnees_originales
         
-        except ValueError:
+        except ValueError as e:
+          # Erreur de déchiffrement (clé incorrecte, padding invalide)
+          # Ne pas retourner b"" si c'est une erreur de validation de taille
+          if "doit faire 32 bytes" in str(e):
+              raise
           return b""
+        except Exception as e:
+          # Erreur critique inattendue
+          raise RuntimeError(f"Erreur critique lors du déchiffrement AES-CBC: {e}")
           
     except FileNotFoundError:
       raise
