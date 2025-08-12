@@ -29,17 +29,16 @@ class FernetAnalyzer(CryptoAnalyzer):
     
     def identifier_algo(self, chemin_fichier_chiffre: str) -> float:
         """
-        Détermine la probabilité que l'algo de chiffrement soit Fernet en vérifiant
-        le format Base64 URL-safe, le byte de version et la structure du jeton.
+        Estime la probabilité que le fichier soit un jeton Fernet valide.
         
-        Heuristiques utilisées:
-        - Format Base64 URL-safe: 30% du score
-        - Taille minimale: 20% du score
-        - Version correcte: 30% du score
-        - Horodatage valide: 20% du score
+        Étapes vérifiées (pondérations indiquées):
+        - Encodage Base64 URL-safe (0.30): le contenu doit se décoder sans erreur.
+        - Taille minimale (0.20): une trame Fernet plausible doit dépasser un seuil.
+        - Byte de version (0x80) (0.30): premier octet attendu.
+        - Horodatage réaliste (0.20): timestamp > 2020 et ≤ maintenant.
         
         Args:
-            chemin_fichier_chiffre (str): Le chemin du fichier chiffré à traiter.
+            chemin_fichier_chiffre (str): Le chemin du fichier chifré à traiter.
             
         Returns:
             float: Score de probabilité entre 0.0 et 1.0.
@@ -50,29 +49,29 @@ class FernetAnalyzer(CryptoAnalyzer):
             with open(chemin_fichier_chiffre, "rb") as f:
                 contenu_fichier = f.read()
             
-            # 1. Vérification du format Base64 URL-safe.
+            # 1) Le contenu doit être décodable en Base64 URL-safe (sinon ce n'est pas Fernet).
             contenu_decode_bytes = base64.urlsafe_b64decode(contenu_fichier)
             score += 0.3
                 
-            # 2. Vérification de la taille minimale.
+            # 2) Taille minimale d'un token Fernet plausible.
             if len(contenu_decode_bytes) >= self._FERNET_MIN_TAILLE:
                 score += 0.2
             else:
                 return 0.0
             
-            # 3. Vérification du premier octet (version 0x80).
+            # 3) Premier octet = byte de version (0x80) attendu.
             premier_octet = contenu_decode_bytes[:1]
             if premier_octet == self._FERNET_VERSION:
                 score += 0.3
             else:
                 return 0.0
             
-            # 4. Vérification de l'horodatage.
+            # 4) Horodatage: doit être dans une plage réaliste.
             horodatage_bytes = contenu_decode_bytes[1:9]
             horodatage_entier = int.from_bytes(horodatage_bytes, 'big')
             
-            # Vérifie que le timestamp est dans une marge réaliste (après 2020 et avant l'heure actuelle).
-            # 1577836800 correspond au 1er janvier 2020.
+            # Vérifie que le timestamp est réaliste (après 2020 et avant l'heure actuelle).
+            # 1577836800 = 1er janvier 2020.
             if horodatage_entier > 1577836800 and horodatage_entier <= time.time(): 
                 score += 0.2
             else:
@@ -83,7 +82,7 @@ class FernetAnalyzer(CryptoAnalyzer):
         except (binascii.Error, ValueError):
             return 0.0
         
-        # Clamp [0,1]
+        # Normalisation: on borne toujours le score dans [0, 1]
         if score < 0.0:
             score = 0.0
         if score > 1.0:

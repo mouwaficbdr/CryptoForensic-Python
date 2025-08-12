@@ -24,11 +24,12 @@ class Blowfish_Analyzer(CryptoAnalyzer):
   
   def identifier_algo(self, chemin_fichier_chiffre: str) -> float:
     '''
-      Détermine la probabilité que l'algo de chiffrement utilisé soit blowfish en:
+      Estime la probabilité que le fichier soit chiffré avec Blowfish (mode par blocs de 8 octets).
       
-      - vérifiant la présence d'un IV à l'en-tête (taille fichier > 8 octets) et que la taille du fichier est un multiple de 8 (blocs de 8 octets pour l'algo blowfish)
-      - calculant l'entropie des données chiffrées
-      - calculant l'entropie des sous blocs
+      Principes:
+      - IV de 8 octets en tête, puis des données chiffrées multiples de 8 octets.
+      - On défavorise les motifs plus proches d'AES (multiples de 16).
+      - L'entropie est prise en compte avec un poids faible.
       
       Args:
         chemin_fichier_chiffre(str): Le chemin du fichier chiffré à traiter (mission1.enc).
@@ -44,32 +45,32 @@ class Blowfish_Analyzer(CryptoAnalyzer):
         taille_totale = len(contenu_fichier)
         TAILLE_IV = 8
         
-        # Gates stricts Blowfish: total > 8, corps multiple de 8
+        # Gardes Blowfish: fichier assez long pour contenir l'IV et corps multiple de 8
         if taille_totale <= TAILLE_IV:
           return 0.0
         donnees_chiffrees = contenu_fichier[TAILLE_IV:]
         if len(donnees_chiffrees) == 0 or (len(donnees_chiffrees) % 8) != 0:
           return 0.0
 
-        # Base: structure Blowfish plausible
+        # Base: structure Blowfish plausible (IV 8B + corps %8)
         score += 0.35
 
-        # Favoriser quand la taille totale n'est pas multiple de 16 (moins AES-like)
+        # Bonus si la taille totale n'est pas multiple de 16 (moins "AES-like")
         if taille_totale % 16 != 0:
           score += 0.25
         else:
           score -= 0.35
 
-        # Pénaliser si les données chiffrées (hors IV) sont multiples de 16 (plus AES-like)
+        # Pénalité si le corps (hors IV) est multiple de 16 (motif plus proche d'AES)
         if len(donnees_chiffrees) % 16 == 0:
           score -= 0.25
 
-        # Entropie: faible poids
+        # Entropie: signal faible, bonus léger si globalement élevée
         try:
           entropie_globale = calculer_entropie(donnees_chiffrees)
           if entropie_globale > 7.3:
             score += 0.15
-            # Pattern par sous-blocs (léger bonus)
+            # Vérification sur deux moitiés (léger bonus si les deux sont élevées)
             taille_donnees = len(donnees_chiffrees)
             moitie = taille_donnees // 2
             entropie_moitie1 = calculer_entropie(donnees_chiffrees[:moitie])
@@ -82,7 +83,7 @@ class Blowfish_Analyzer(CryptoAnalyzer):
     except FileNotFoundError:
       return 0.0    
     
-    # Clamp [0,1]
+    # Normalisation: on borne toujours le score dans [0, 1]
     if score < 0.0:
       score = 0.0
     if score > 1.0:

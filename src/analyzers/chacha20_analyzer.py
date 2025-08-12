@@ -33,19 +33,20 @@ class ChaCha20_Analyzer(CryptoAnalyzer):
 
     def identifier_algo(self, chemin_fichier_chiffre: str) -> float:
         """
-        Détermine la probabilité que l'algo de chiffrement utilisé soit l'ChaCha20 en:
-        - vérifiant la présence d'un nonce de 12 bytes en début de fichier
-        - vérifiant l'entropie très élevée sur l'ensemble des données
-        - vérifiant l'absence de padding (pas de contrainte de taille)
-        - vérifiant que la taille du fichier est suffisante pour contenir un nonce
+        Estime la probabilité que le fichier soit chiffré avec ChaCha20.
         
-        Retourne une probabilité entre 0 et 1 (Pour connaitre la probabilité que l'algo de chiffrement utilisé soit l'ChaCha20).
+        Idée générale:
+        - Nonce (12 octets) en tête, puis données chiffrées sans format de bloc (flux).
+        - En flux, la taille du corps n'est typiquement pas multiple de 8 ni de 16.
+        - On pénalise un motif AEAD très net (queue de 16 octets très aléatoire + nonce aléatoire), typique de GCM.
+        - L'entropie est un signal faible, la structure prime.
+        
+        Retourne un score entre 0.0 et 1.0.
         
         Args:
-            chemin_fichier_chiffre(str): le chemin du fichier chiffré à traiter.
-            
+            chemin_fichier_chiffre (str): Chemin du fichier chiffré à analyser.
         Returns:
-            float: La probabilité que l'algo de chiffrement utilisé soit l'ChaCha20 après le calcul.
+            float: Probabilité estimée que l'algorithme soit ChaCha20.
         """
         try:
             with open(chemin_fichier_chiffre, 'rb') as f:
@@ -63,36 +64,41 @@ class ChaCha20_Analyzer(CryptoAnalyzer):
             # Composantes de score
             score: float = 0.0
 
-            # Pondération révisée: structure flux > entropie
-            # 1) Tailles bloc (fortes pénalités contre les modes par blocs)
+            # Pondération: structure de flux > entropie
+            # 1) Tailles de blocs: fortes pénalités contre les modes par blocs
             taille_donnees: int = len(corps)
             if taille_donnees % 16 == 0:
                 score -= 0.40
             elif taille_donnees % 8 == 0:
                 score -= 0.20
             else:
-                score += 0.40  # flux typique
-                # Bonus très léger supplémentaire pour flux typique (ni %8 ni %16)
+                score += 0.50  # flux typique
+                # Bonus très léger supplémentaire pour flux (ni %8 ni %16)
                 score += 0.05
 
-            # 2) AEAD-like tag en fin (fort négatif contre GCM)
+            # 2) Queue de 16 octets très aléatoire (tag AEAD probable):
+            #    pénalité forte seulement si combinée avec nonce très aléatoire et corps suffisant.
             queue16: bytes = corps[-16:] if len(corps) >= 16 else b""
             if queue16:
                 try:
                     ent_queue = calculer_entropie(queue16)
-                    if ent_queue > 7.2:
-                        score -= 0.30
+                    # Pénalité forte uniquement si le pattern (nonce 12B + queue 16B) est très net et corps significatif
+                    if ent_queue > 7.2 and 'ent_nonce' in locals() and ent_nonce > 7.0 and len(corps) >= 32:
+                        score -= 0.45
                     elif ent_queue <= 7.0:
                         # Queue ressemblant moins à un tag AEAD → léger bonus
                         score += 0.10
+                    else:
+                        # Sinon, ne pas sur-pénaliser les queues aléatoires typiques du flux
+                        score += 0.00
                 except Exception:
                     pass
 
-            # 3) Taille totale non multiple de 16 (bonus léger)
+            # 3) Taille totale non multiple de 16 (bonus léger pour un flux)
             if len(donnees) % 16 != 0:
-                score += 0.10
+                score += 0.15
 
-            # 4) Entropie: signaux faibles
+            # 4) Entropie: signaux faibles, ne doivent pas dominer le score
             try:
                 ent_corp: float = calculer_entropie(corps)
                 if ent_corp > 7.0:
@@ -103,7 +109,15 @@ class ChaCha20_Analyzer(CryptoAnalyzer):
             except Exception:
                 pass
 
-            # Clamp [0,1]
+            # Pénalité additionnelle si la queue ressemble à un tag AEAD ET le nonce paraît aléatoire (pattern GCM)
+            try:
+                ent_queue2 = calculer_entropie(corps[-16:]) if len(corps) >= 16 else 0.0
+                if ent_queue2 > 7.2 and 'ent_nonce' in locals() and ent_nonce > 7.0:
+                    score -= 0.10
+            except Exception:
+                pass
+
+            # Normalisation: on borne toujours le score dans [0, 1]
             if score < 0.0:
                 score = 0.0
             if score > 1.0:
