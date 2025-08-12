@@ -102,6 +102,12 @@ class Blowfish_Analyzer(CryptoAnalyzer):
     """
     Filtre le dictionnaire en se basant sur les indices de la mission 3.
     L'indice pointe vers un format de clé "sha + nombre + chiffres simples".
+
+    Args:
+      chemin_dictionnaire (str): Chemin du dictionnaire sur lequel on effectue la recherche des potentielles mots clés
+
+    Return:
+      list[str]: La liste de tous les mots en chaine de caractères, susceptibles d'être des mots clés parmi ceux du dictionnaire fourni. 
     """
     mots_filtres: list[str] = []
     prefixes = ("sha256", "sha384", "sha512", "sha1")
