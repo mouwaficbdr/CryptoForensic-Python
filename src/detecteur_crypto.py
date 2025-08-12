@@ -47,10 +47,10 @@ class DetecteurCryptoOrchestrateur:
         """
         self.analyzers: dict[str, CryptoAnalyzer] = {
             "AES-CBC-256": Aes_Cbc_Analyzer(),
-            "ChaCha20": ChaCha20_Analyzer(),
-            "Blowfish": Blowfish_Analyzer(),
+            "CHACHA20": ChaCha20_Analyzer(),
+            "BLOWFISH": Blowfish_Analyzer(),
             "AES-GCM": Aes_Gcm_Analyzer(),
-            "Fernet": FernetAnalyzer(),
+            "FERNET": FernetAnalyzer(),
         }
         self.missions_completees: list[dict[str, Union[str, list[ResultatAnalyse], float]]]  = []
         self.statistiques_globales: dict[str, Union[int, float]] = {
@@ -404,4 +404,4 @@ class DetecteurCryptoOrchestrateur:
             # print("\n Process is done ...")
 
 
-print(DetecteurCryptoOrchestrateur().attaque_dictionnaire("mission1.enc","AES-CBC-256"))
+# print(DetecteurCryptoOrchestrateur().attaque_dictionnaire("mission5.enc","FERNET"))
