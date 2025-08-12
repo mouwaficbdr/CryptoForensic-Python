@@ -1,15 +1,13 @@
 # Import des modules
 import hashlib
-from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
-from cryptography.exceptions import InvalidTag
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms
 from rich import print
 import os
 import sys
 from typing import List
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from crypto_analyzer import CryptoAnalyzer
-from utils import calculer_entropie
+from src.crypto_analyzer import CryptoAnalyzer
+from src.utils import calculer_entropie
 
 # Définition de la classe ChaCha20_Analyzer
 class ChaCha20_Analyzer(CryptoAnalyzer):
@@ -35,73 +33,140 @@ class ChaCha20_Analyzer(CryptoAnalyzer):
 
     def identifier_algo(self, chemin_fichier_chiffre: str) -> float:
         """
-        Détermine la probabilité que l'algo de chiffrement utilisé soit l'ChaCha20 en:
-        - vérifiant la présence d'un nonce de 12 bytes en début de fichier
-        - vérifiant l'entropie très élevée sur l'ensemble des données
-        - vérifiant l'absence de padding (pas de contrainte de taille)
-        - vérifiant que la taille du fichier est suffisante pour contenir un nonce
+        Estime la probabilité que le fichier soit chiffré avec ChaCha20.
         
-        Retourne une probabilité entre 0 et 1 (Pour connaitre la probabilité que l'algo de chiffrement utilisé soit l'ChaCha20).
+        Idée générale:
+        - Nonce (12 octets) en tête, puis données chiffrées sans format de bloc (flux).
+        - En flux, la taille du corps n'est typiquement pas multiple de 8 ni de 16.
+        - On pénalise un motif AEAD très net (queue de 16 octets très aléatoire + nonce aléatoire), typique de GCM.
+        - L'entropie est un signal faible, la structure prime.
+        
+        Retourne un score entre 0.0 et 1.0.
         
         Args:
-            chemin_fichier_chiffre(str): le chemin du fichier chiffré à traiter.
-            
+            chemin_fichier_chiffre (str): Chemin du fichier chiffré à analyser.
         Returns:
-            float: La probabilité que l'algo de chiffrement utilisé soit l'ChaCha20 après le calcul.
+            float: Probabilité estimée que l'algorithme soit ChaCha20.
         """
         try:
             with open(chemin_fichier_chiffre, 'rb') as f:
                 donnees: bytes = f.read()
-            
-            if len(donnees) < self._CHACHA20_LONGUEUR_NONCE:
+
+            if len(donnees) < self._CHACHA20_LONGUEUR_NONCE + 1:
                 return 0.0
-            
+
             nonce: bytes = donnees[:self._CHACHA20_LONGUEUR_NONCE]
-            donnees_chiffrees: bytes = donnees[self._CHACHA20_LONGUEUR_NONCE:]
-            
-            if len(donnees_chiffrees) == 0:
+            corps: bytes = donnees[self._CHACHA20_LONGUEUR_NONCE:]
+
+            if len(corps) == 0:
                 return 0.0
-            
-            taille_min: float = 0.0
-            if len(donnees) >= self._CHACHA20_LONGUEUR_NONCE + 16:
-                taille_min = 1.0
-            
-            entropie: float = calculer_entropie(donnees_chiffrees)
-            entropie_max: float = min(entropie / 8.0, 1.0)
-            
-            padding_max: float = 1.0
-            taille_donnees: int = len(donnees_chiffrees)
-            if taille_donnees % 16 == 0 or taille_donnees % 8 == 0:
-                padding_max = 0.5
-            
-            entropie_nonce: float = calculer_entropie(nonce)
-            nonce_max: float = min(entropie_nonce / 8.0, 1.0)
-            
-            probabilite: float = (taille_min * 0.1 + 
-                          entropie_max * 0.4 + 
-                          padding_max * 0.3 + 
-                          nonce_max * 0.2)
-            
-            return probabilite
+
+            # Composantes de score
+            score: float = 0.0
+
+            # Pondération: structure de flux > entropie
+            # 1) Tailles de blocs: fortes pénalités contre les modes par blocs
+            taille_donnees: int = len(corps)
+            if taille_donnees % 16 == 0:
+                score -= 0.40
+            elif taille_donnees % 8 == 0:
+                score -= 0.20
+            else:
+                score += 0.50  # flux typique
+                # Bonus très léger supplémentaire pour flux (ni %8 ni %16)
+                score += 0.05
+
+            # 2) Queue de 16 octets très aléatoire (tag AEAD probable):
+            #    pénalité forte seulement si combinée avec nonce très aléatoire et corps suffisant.
+            queue16: bytes = corps[-16:] if len(corps) >= 16 else b""
+            if queue16:
+                try:
+                    ent_queue = calculer_entropie(queue16)
+                    # Pénalité forte uniquement si le pattern (nonce 12B + queue 16B) est très net et corps significatif
+                    if ent_queue > 7.2 and 'ent_nonce' in locals() and ent_nonce > 7.0 and len(corps) >= 32:
+                        score -= 0.45
+                    elif ent_queue <= 7.0:
+                        # Queue ressemblant moins à un tag AEAD → léger bonus
+                        score += 0.10
+                    else:
+                        # Sinon, ne pas sur-pénaliser les queues aléatoires typiques du flux
+                        score += 0.00
+                except Exception:
+                    pass
+
+            # 3) Taille totale non multiple de 16 (bonus léger pour un flux)
+            if len(donnees) % 16 != 0:
+                score += 0.15
+
+            # 4) Entropie: signaux faibles, ne doivent pas dominer le score
+            try:
+                ent_corp: float = calculer_entropie(corps)
+                if ent_corp > 7.0:
+                    score += 0.15
+                ent_nonce: float = calculer_entropie(nonce)
+                if ent_nonce > 7.0:
+                    score += 0.05
+            except Exception:
+                pass
+
+            # Pénalité additionnelle si la queue ressemble à un tag AEAD ET le nonce paraît aléatoire (pattern GCM)
+            try:
+                ent_queue2 = calculer_entropie(corps[-16:]) if len(corps) >= 16 else 0.0
+                if ent_queue2 > 7.2 and 'ent_nonce' in locals() and ent_nonce > 7.0:
+                    score -= 0.10
+            except Exception:
+                pass
+
+            # Normalisation: on borne toujours le score dans [0, 1]
+            if score < 0.0:
+                score = 0.0
+            if score > 1.0:
+                score = 1.0
+            return score
             
         except Exception as e:
             print(f"Erreur lors de l'identification de l'algorithme: {e}")
             return 0.0
 
-    def filtrer_dictionnaire_par_indices(self, chemin_dictionnaire: str) -> List[bytes]:
-        # En supposant qu'elle retourne une liste de bytes pour les clés.
+    def __filtrer_dictionnaire_par_indices(self, chemin_dictionnaire: str) -> List[str]:
 
         """
-            Cette fonction a pour but de filter le fichier de dictionnaire en fonction des différents niveaux d'indices
-            pour déterminer les données les plus pertinentes.
+            Filtre le dictionnaire selon les indices de mission pour sélectionner les mots pertinents.
+
+            - Prioritaire: motifs "2024" + mot anglais en minuscules (ex: 2024hello)
+            - Secondaire: 4 chiffres + mot anglais en minuscules (ex: 1337secret)
 
             Args: 
                 chemin_dictionnaire(str): Le chemin vers le dictionnaire fourni 
 
             Returns: 
-                list[bytes]: La liste de tous les mots susceptibles d'être des clés adéquates.
+                List[str]: Les mots candidats conformément aux indices (prioritaires si présents, sinon secondaires).
         """
-        return []
+        candidats_prioritaires: List[str] = []
+        candidats_secondaires: List[str] = []
+
+        try:
+            with open(chemin_dictionnaire, 'r', encoding='utf-8') as f:
+                for ligne in f:
+                    mot = ligne.strip()
+                    if not mot:
+                        continue
+
+                    # Pattern principal des indices: 2024 + mot anglais simple
+                    if len(mot) >= 6 and mot.startswith('2024') and mot[4:].isalpha() and mot[4:].islower():
+                        candidats_prioritaires.append(mot)
+                        continue
+
+                    # Pattern secondaire: 4 chiffres + mot anglais simple (fallback si aucune clé prioritaire)
+                    if len(mot) >= 6 and mot[:4].isdigit() and mot[4:].isalpha() and mot[4:].islower():
+                        candidats_secondaires.append(mot)
+
+        except FileNotFoundError:
+            print(f"Erreur : Le fichier de dictionnaire '{chemin_dictionnaire}' est introuvable.")
+            return []
+
+        # Retourner d'abord les candidats prioritaires, sinon les secondaires
+        return candidats_prioritaires if candidats_prioritaires else candidats_secondaires
 
     def generer_cles_candidates(self, chemin_dictionnaire: str) -> List[bytes]:
         """
@@ -114,10 +179,16 @@ class ChaCha20_Analyzer(CryptoAnalyzer):
         Returns:
             cles_candidates (List[bytes]) : Un tableau de clés, chaque clé étant une séquence d'octets.
         """
-        donnees_fichier_filtre: List[bytes] = self.filtrer_dictionnaire_par_indices(chemin_dictionnaire)
         cles_candidates: List[bytes] = []
-        for cle in donnees_fichier_filtre:
-            cles_candidates.append(hashlib.sha256(cle).digest())
+
+        # Utiliser la méthode de filtrage harmonisée
+        candidats: List[str] = self.__filtrer_dictionnaire_par_indices(chemin_dictionnaire)
+
+        for cand in candidats:
+            # Dérivation clé: SHA256 du mot de passe (indices)
+            cle = hashlib.sha256(cand.encode('utf-8')).digest()
+            cles_candidates.append(cle)
+
         return cles_candidates
     
     def dechiffrer(self, chemin_fichier_chiffre: str, cle_donnee: bytes) -> bytes:
@@ -131,30 +202,39 @@ class ChaCha20_Analyzer(CryptoAnalyzer):
         """
 
 
+        # Validation de la taille de clé (ChaCha20 nécessite 32 bytes)
         if len(cle_donnee) != self._CHACHA20_LONGUEUR_CLE:
             raise ValueError("Erreur : La clé n'a pas la taille correcte")
-        
+
         try:
             with open(chemin_fichier_chiffre, 'rb') as f:
-                nonce: bytes = f.read(self._CHACHA20_LONGUEUR_NONCE)
-                texte_chiffre: bytes = f.read()
+                nonce_12: bytes = f.read(self._CHACHA20_LONGUEUR_NONCE)
+                payload: bytes = f.read()
 
-            aead = ChaCha20Poly1305(cle_donnee)
-            resultat: bytes = aead.decrypt(nonce, texte_chiffre, None)
-            
-            return resultat
+            if len(nonce_12) != self._CHACHA20_LONGUEUR_NONCE or len(payload) == 0:
+                return b""
+
+            # ChaCha20 stream (cryptography attend un nonce 16B)
+            # Construire un nonce 16B en préfixant 4 octets nuls au nonce 12B
+            nonce_16 = b"\x00\x00\x00\x00" + nonce_12
+            try:
+                cipher = Cipher(algorithms.ChaCha20(cle_donnee, nonce_16), mode=None)
+                decryptor = cipher.decryptor()
+                resultat: bytes = decryptor.update(payload) + decryptor.finalize()
+                return resultat
+            except Exception:
+                return b""
 
         except FileNotFoundError:
             raise
-        except InvalidTag:
-            return b""
         except Exception:
+            # Erreur de déchiffrement (clé incorrecte, format invalide)
             return b""
 
-# L'appel direct a été déplacé dans un bloc if __name__ == "__main__" pour de bonnes pratiques (Mouwafic)
+
 if __name__ == "__main__":
     try:
-        resultat_dechiffrement: bytes = ChaCha20_Analyzer().dechiffrer("mission2.enc", os.urandom(32))
+        resultat_dechiffrement: bytes = ChaCha20_Analyzer().dechiffrer("data/mission2.enc", os.urandom(32))
         print(f"Résultat du déchiffrement : {resultat_dechiffrement.decode('utf-8')}")
     except ValueError as ve:
         print(ve)

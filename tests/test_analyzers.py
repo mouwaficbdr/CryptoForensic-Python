@@ -1,3 +1,4 @@
+import base64
 from unittest import TestCase, main
 import os
 import sys
@@ -6,12 +7,17 @@ from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
 from Crypto.Cipher import Blowfish
 from struct import pack
 
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from cryptography.fernet import Fernet
+from pathlib import Path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
 
 from src.analyzers.aes_cbc_analyzer import Aes_Cbc_Analyzer
 from src.analyzers.chacha20_analyzer import ChaCha20_Analyzer
 from src.analyzers.blowfish_analyzer import Blowfish_Analyzer
+from src.analyzers.aes_gcm_analyzer import Aes_Gcm_Analyzer
+from src.analyzers.fernet_analyzer import FernetAnalyzer
+
 
 
 class AesCbcAnalyzerTester(TestCase):
@@ -32,9 +38,9 @@ class AesCbcAnalyzerTester(TestCase):
         self.assertAlmostEqual(self.analyser.identifier_algo(self.chemin_fichier_chiffre_invalide), 0)
 
     def test_aes_cbc_filtrage_dict(self):
-        self.assertIsInstance(self.analyser.filtrer_dictionnaire_par_indices(self.wordlist), list)
-        self.assertEqual(self.analyser.filtrer_dictionnaire_par_indices(self.wordlist), ["paris2024"])
-        self.assertEqual(self.analyser.filtrer_dictionnaire_par_indices("chemin_dohi.txt"), [])
+        self.assertIsInstance(self.analyser._Aes_Cbc_Analyzer__filtrer_dictionnaire_par_indice(self.wordlist), list)
+        self.assertEqual(self.analyser._Aes_Cbc_Analyzer__filtrer_dictionnaire_par_indice(self.wordlist), ["paris2024"])
+        self.assertEqual(self.analyser._Aes_Cbc_Analyzer__filtrer_dictionnaire_par_indice("chemin_dohi.txt"), [])
 
     def test_generation_cles_candidate(self):
         self.assertIsInstance(self.analyser.generer_cles_candidates(self.wordlist), list)
@@ -81,9 +87,11 @@ class ChaCha20AnalyzerTester(TestCase):
         self.assertAlmostEqual(self.analyser_chacha.identifier_algo(self.chemin_fichier_chacha_invalide), 0.0, 1)
 
     def test_chacha20_generer_cles_candidates(self):
-        # Comme la fonction filtrer_dictionnaire_par_indices retourne toujours une liste vide,
-        # generer_cles_candidates doit également retourner une liste vide.
-        self.assertEqual(self.analyser_chacha.generer_cles_candidates(self.wordlist), [])
+        # La fonction generer_cles_candidates utilise maintenant __filtrer_dictionnaire_par_indice
+        # et devrait retourner une liste de clés dérivées des mots de passe filtrés
+        resultat = self.analyser_chacha.generer_cles_candidates(self.wordlist)
+        self.assertIsInstance(resultat, list)
+        self.assertTrue(all(isinstance(cle, bytes) for cle in resultat))
 
     def test_chacha20_dechiffrer(self):
         # Test de déchiffrement avec une clé et un nonce valides
@@ -151,6 +159,94 @@ class BlowfishAnalyzerTester(TestCase):
 
         # Cas où la valeur de sortie ne correspond à celle attendue
         self.assertNotEqual(self.analyzer.dechiffrer(self.fichier_crypte_valide, self.key), b'Dohi 1 fois')
+            
+class AesGcmTester(TestCase) :
+    _wordlist = "keys/wordlist.txt"
+    _analyzer=Aes_Gcm_Analyzer()
+    _fichier="data/mission3.enc"
+    _fichier_test = Path('tests/fichiers_pour_tests') / 'aes_gcm_invalide.enc'
+    _texte_test = b"Test effectue pour AesGcm, encore. Nous en sommes a la.fin"
+    
+    
+    def setUp(self): 
+        """
+        Crée un fchier de test crypté en AESGCM pour les tests unitaires
+        """
+        key = AESGCM.generate_key(128)
+        nonce = os.urandom(12)
+        aad = os.urandom(16)
+        texte_chiffre = AESGCM(key).encrypt(nonce, self._texte_test, aad)
+        with open(self._fichier_test, '+wb') as f:
+            f.write(nonce)
+            f.write(texte_chiffre)
+        f.close()
+        
+    def test_aesgcm_generer_cles_candidates(self):
+        #Vérifie que les clés candidates générés par cet algorithme sont une liste de bytes
+        resultat = self._analyzer.generer_cles_candidates(self._wordlist)
+        self.assertIsInstance(resultat, list)
+        # Vérifier que tous les éléments sont des bytes
+        for cle in resultat:
+            self.assertIsInstance(cle, bytes)
+    
+    def test_aes_gcm_identifier_algo(self):
+        #Vérifie que la probabilité retournée pour le fichier AES GCM valide est un float et élevée
+        # Une méthode identifier_algo bien implémentée devrait retourner une probabilité élevée (0.8+)
+        # pour un fichier AES GCM valide, pas seulement 0.5
+        resultat = self._analyzer.identifier_algo(self._fichier_test)
+        self.assertIsInstance(resultat, float)
+        self.assertAlmostEqual(resultat, 0.8, places=1)  # Corrigé de 0.5 à 0.8
+    
+    def test_aes_gcm_dechiffrer(self):
+        # Créer une clé de test pour le déchiffrement
+        cle_test = b"cle_test_32_bytes_pour_aes_gcm_"
+        resultat = self._analyzer.dechiffrer(self._fichier_test, cle_test)
+        self.assertIsInstance(resultat, bytes)
+        
+class FernetTester(TestCase) :
+    _wordlist = "keys/wordlist.txt"
+    _analyzer=FernetAnalyzer()
+    _fichier_test = Path('tests/fichiers_pour_tests') / 'fernet_invalide.enc'
+    _texte_test = b"Test effectue pour Fernet, encore. Nous en sommes a la.fin"   
+    _key = os.urandom(32)
+
+    def setUp(self):
+        """
+        Crée un fichier pour les tests relatifs à Fernet
+        """
+        try :
+            with open(self._fichier_test, 'wb') as f:
+                texte_chiffre = Fernet(base64.urlsafe_b64encode(self._key)).encrypt(self._texte_test)
+                f.write(texte_chiffre)
+            f.close()
+        except FileNotFoundError :
+            raise
+        
+    def test_fernet_gk(self):
+        resultat = self._analyzer.generer_cles_candidates(self._wordlist)
+        self.assertIsInstance(resultat, list)
+        # Vérifier que tous les éléments sont des bytes
+        for cle in resultat:
+            self.assertIsInstance(cle, bytes)
+            
+    def test_fernet_id_algo(self):
+        #Vérifier que seul le fichier mission 5 a plus de 0.8 de score pour l'identification de Fernet
+        for i in range(5) :
+            if i+1 != 5 and self._analyzer.identifier_algo(f"mission{i+1}.enc") >= 0.8:
+                raise Exception('Non correspondance entre probabilité et algorithme.')  
+    
+    def test_dechiffrer(self) :
+        #Vérifie que le déchiffrement de fernet est opérationnel
+        resultat = self._analyzer.dechiffrer
+        self.assertEqual(resultat(self._fichier_test, self._key), self._texte_test)
+        
+        #Vérifie le cas de clé non correspondante
+        with self.assertRaises(ValueError) :
+            self.assertIsInstance(resultat(self._fichier_test, os.urandom(16)), ValueError)
+        
+        #Vérifie le cas de fichier non trouvé
+        with self.assertRaises(FileNotFoundError):
+            self.assertIsInstance(resultat('dohi.txt', os.urandom(32)), FileNotFoundError)     
         
 if __name__ == '__main__':
     main()

@@ -1,15 +1,17 @@
-import math
-import string
+import math, re, string, time
 from pathlib import Path
 from typing import Any, Dict, List, TypedDict
-
+from rich.console import Console
+from threading import Thread
 class StatsDict(TypedDict):
     imprimable: float
     nombre_mots: int
     p_mots_valide: float
     non_mots: List[str]
     ponctuation_valide: int
-
+  
+                
+        
 def calculer_entropie(bytes: bytes) -> float:
     '''
         Calcul l'entropie (le désordre dans une suite de données) afin de déterminer le degré d'improbabilité d'une chaine de données.
@@ -31,35 +33,6 @@ def calculer_entropie(bytes: bytes) -> float:
         proba_byte = 1 / i
         entropie +=  (proba_byte) * math.log(1/proba_byte, 2)
     return entropie
-
-
-
-def est_dechiffre(texte:str) -> bool: 
-    """
-        Détermine si oui ou non une chaine a été déchiffrée
-        
-        Args: 
-            texte(str): la chaine en supposée déchiffrée
-        Returns: 
-            bool: déchiffrée ou non
-    """
-    stats:dict[str, Any] = verifier_texte_dechiffre(texte)
-    pourcent=0
-    
-    # Les caractères imprimables constituent 50% de la validation du déchiffrement
-    if stats['imprimable'] > 70 :
-        pourcent += 50
-    
-    # Le pourcentage de mots validés par les dictionnaires en constitue 30%
-    if stats['p_mots_valide'] > 50 :
-        pourcent += 30
-    
-    # Le respect de la ponctuation, les 20% restants
-    if stats['ponctuation'] > 50 :
-        pourcent += 20
-    
-    return True if pourcent > 70 else False
-
         
 
 def verifier_texte_dechiffre(texte: str) -> Dict[str, Any]:
@@ -76,6 +49,7 @@ def verifier_texte_dechiffre(texte: str) -> Dict[str, Any]:
             -le pourcentage de mots valide, 
             -les mots non valides et 
             -le pourcentage de ponctuation respecté
+            -le taux de succès du déchiffrement
     """
 
     #Statistiques sur le texte 
@@ -85,7 +59,8 @@ def verifier_texte_dechiffre(texte: str) -> Dict[str, Any]:
         'nombre_mots':0,
         'p_mots_valide':0,
         'non_mots':[],
-        'ponctuation_valide':0
+        'ponctuation_valide':0,
+        'taux_succes':0
     }
     
     if not texte:
@@ -100,7 +75,9 @@ def verifier_texte_dechiffre(texte: str) -> Dict[str, Any]:
     copy=texte
     for lettre in tab:
         copy=copy.replace(lettre, ' ')
-    mots = [mot for mot in copy.strip().split(' ') if mot]
+    
+    # Diviser par espaces et filtrer les mots vides
+    mots = [mot.strip() for mot in copy.split(' ') if mot.strip()]
     stats['nombre_mots']=len(mots)
     
     # Verifier que le chaque mot du texte est un mot anglais/francais 
@@ -119,7 +96,9 @@ def verifier_texte_dechiffre(texte: str) -> Dict[str, Any]:
                 try:
                     with open(chemin, 'r', encoding='latin-1') as f: 
                         for ligne in f:
-                            if ligne.strip() == mot:
+                            ligne_clean = ligne.strip().removesuffix('\n')
+                            # Utiliser une correspondance exacte au lieu de re.match
+                            if ligne_clean.lower() == mot.lower():
                                 mots_valides += 1
                                 trouve=True
                                 break
@@ -134,7 +113,7 @@ def verifier_texte_dechiffre(texte: str) -> Dict[str, Any]:
             stats['p_mots_valide'] = round((mots_valides / len(mots)) * 100, 2)
         else:
             stats['p_mots_valide'] = 0.0
-                    
+                
     except Exception:
         raise
         
@@ -153,6 +132,9 @@ def verifier_texte_dechiffre(texte: str) -> Dict[str, Any]:
     if not nbr_points: nbr_points=1
     stats['ponctuation_valide'] = round(count*100/nbr_points, 2)
     
+    #Evaluation du succès du déchiffrement
+    stats['taux_succes'] = round((stats['imprimable'] + stats['p_mots_valide'] + stats['ponctuation_valide']) / 3, 2)
+
     return stats
     
 
@@ -187,4 +169,6 @@ def rangerDico() -> None:
         print(compte)   
     except FileNotFoundError: 
         print('Fichier non trouvé.')
-# rangerDico()
+# rangerDico()         
+
+# print(verifier_texte_dechiffre("je talk !a mamamia:?\n"))
