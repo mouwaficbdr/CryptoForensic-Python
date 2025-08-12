@@ -112,8 +112,12 @@ class consoleInterface:
         self.dynamiqueText("Mission complète automatique","green")
         self.dynamiqueText("Veuillez entrer le chemin du dossier :","white")
         time.sleep(0.02)
-        
-        chemin_dossier = self.prompt.ask("Veuillez entrer le chemin du dossier : ")
+        pad = 0
+        while pad < self.calc_center("data"):
+            print(" ",end='')
+            pad+=1
+            
+        chemin_dossier = self.prompt.ask("")
         resultat = DetecteurCryptoOrchestrateur().mission_complete_automatique(chemin_dossier, "keys/wordlist.txt")
         print(line for line in resultat)
         # self.console.clear()
