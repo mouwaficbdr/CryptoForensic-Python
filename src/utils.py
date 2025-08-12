@@ -1,16 +1,17 @@
-import math
-import re
-import string
+import math, re, string, time
 from pathlib import Path
 from typing import Any, Dict, List, TypedDict
-
+from rich.console import Console
+from threading import Thread
 class StatsDict(TypedDict):
     imprimable: float
     nombre_mots: int
     p_mots_valide: float
     non_mots: List[str]
     ponctuation_valide: int
-
+  
+                
+        
 def calculer_entropie(bytes: bytes) -> float:
     '''
         Calcul l'entropie (le désordre dans une suite de données) afin de déterminer le degré d'improbabilité d'une chaine de données.
