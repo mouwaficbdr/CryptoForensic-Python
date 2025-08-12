@@ -27,7 +27,7 @@ class ResultatAnalyse:
         self.texte_dechiffre = texte_dechiffre
         self.temps_execution = temps_execution
         self.nb_tentatives = nb_tentatives
-        self.fichier = fichier,
+        self.fichier = fichier
         self.taux_succes = taux_succes
 class DetecteurCryptoOrchestrateur:
     """
