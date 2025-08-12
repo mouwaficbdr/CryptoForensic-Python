@@ -3,3 +3,5 @@ cryptography==43.0.0
 pycparser==2.22
 pycryptodome==3.23.0
 rich==14.1.0
+tqdm==4.67.1
+colorama==0.4.6
