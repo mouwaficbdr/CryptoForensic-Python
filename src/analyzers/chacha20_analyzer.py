@@ -50,37 +50,65 @@ class ChaCha20_Analyzer(CryptoAnalyzer):
         try:
             with open(chemin_fichier_chiffre, 'rb') as f:
                 donnees: bytes = f.read()
-            
-            if len(donnees) < self._CHACHA20_LONGUEUR_NONCE:
+
+            if len(donnees) < self._CHACHA20_LONGUEUR_NONCE + 1:
                 return 0.0
-            
+
             nonce: bytes = donnees[:self._CHACHA20_LONGUEUR_NONCE]
-            donnees_chiffrees: bytes = donnees[self._CHACHA20_LONGUEUR_NONCE:]
-            
-            if len(donnees_chiffrees) == 0:
+            corps: bytes = donnees[self._CHACHA20_LONGUEUR_NONCE:]
+
+            if len(corps) == 0:
                 return 0.0
-            
-            taille_min: float = 0.0
-            if len(donnees) >= self._CHACHA20_LONGUEUR_NONCE + 16:
-                taille_min = 1.0
-            
-            entropie: float = calculer_entropie(donnees_chiffrees)
-            entropie_max: float = min(entropie / 8.0, 1.0)
-            
-            padding_max: float = 1.0
-            taille_donnees: int = len(donnees_chiffrees)
-            if taille_donnees % 16 == 0 or taille_donnees % 8 == 0:
-                padding_max = 0.5
-            
-            entropie_nonce: float = calculer_entropie(nonce)
-            nonce_max: float = min(entropie_nonce / 8.0, 1.0)
-            
-            probabilite: float = (taille_min * 0.1 + 
-                          entropie_max * 0.4 + 
-                          padding_max * 0.3 + 
-                          nonce_max * 0.2)
-            
-            return probabilite
+
+            # Composantes de score
+            score: float = 0.0
+
+            # Pondération révisée: structure flux > entropie
+            # 1) Tailles bloc (fortes pénalités contre les modes par blocs)
+            taille_donnees: int = len(corps)
+            if taille_donnees % 16 == 0:
+                score -= 0.40
+            elif taille_donnees % 8 == 0:
+                score -= 0.20
+            else:
+                score += 0.40  # flux typique
+                # Bonus très léger supplémentaire pour flux typique (ni %8 ni %16)
+                score += 0.05
+
+            # 2) AEAD-like tag en fin (fort négatif contre GCM)
+            queue16: bytes = corps[-16:] if len(corps) >= 16 else b""
+            if queue16:
+                try:
+                    ent_queue = calculer_entropie(queue16)
+                    if ent_queue > 7.2:
+                        score -= 0.30
+                    elif ent_queue <= 7.0:
+                        # Queue ressemblant moins à un tag AEAD → léger bonus
+                        score += 0.10
+                except Exception:
+                    pass
+
+            # 3) Taille totale non multiple de 16 (bonus léger)
+            if len(donnees) % 16 != 0:
+                score += 0.10
+
+            # 4) Entropie: signaux faibles
+            try:
+                ent_corp: float = calculer_entropie(corps)
+                if ent_corp > 7.0:
+                    score += 0.15
+                ent_nonce: float = calculer_entropie(nonce)
+                if ent_nonce > 7.0:
+                    score += 0.05
+            except Exception:
+                pass
+
+            # Clamp [0,1]
+            if score < 0.0:
+                score = 0.0
+            if score > 1.0:
+                score = 1.0
+            return score
             
         except Exception as e:
             print(f"Erreur lors de l'identification de l'algorithme: {e}")

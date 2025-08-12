@@ -44,30 +44,49 @@ class Blowfish_Analyzer(CryptoAnalyzer):
         taille_totale = len(contenu_fichier)
         TAILLE_IV = 8
         
-        # Heuristique 1 : Vérification de la taille (le critère le plus important)
-        if taille_totale > TAILLE_IV and taille_totale % 8 == 0:
-          score += 0.4
-          
-          donnees_chiffrees = contenu_fichier[TAILLE_IV:]
-          
-          # Heuristique 2 : Vérification de l'entropie globale
+        # Gates stricts Blowfish: total > 8, corps multiple de 8
+        if taille_totale <= TAILLE_IV:
+          return 0.0
+        donnees_chiffrees = contenu_fichier[TAILLE_IV:]
+        if len(donnees_chiffrees) == 0 or (len(donnees_chiffrees) % 8) != 0:
+          return 0.0
+
+        # Base: structure Blowfish plausible
+        score += 0.35
+
+        # Favoriser quand la taille totale n'est pas multiple de 16 (moins AES-like)
+        if taille_totale % 16 != 0:
+          score += 0.25
+        else:
+          score -= 0.35
+
+        # Pénaliser si les données chiffrées (hors IV) sont multiples de 16 (plus AES-like)
+        if len(donnees_chiffrees) % 16 == 0:
+          score -= 0.25
+
+        # Entropie: faible poids
+        try:
           entropie_globale = calculer_entropie(donnees_chiffrees)
-          if entropie_globale > 7.5:
-            score += 0.3
-            
-            # Heuristique 3 : Vérification du "pattern Blowfish" (entropie par sous-blocs)
+          if entropie_globale > 7.3:
+            score += 0.15
+            # Pattern par sous-blocs (léger bonus)
             taille_donnees = len(donnees_chiffrees)
             moitie = taille_donnees // 2
-            
             entropie_moitie1 = calculer_entropie(donnees_chiffrees[:moitie])
             entropie_moitie2 = calculer_entropie(donnees_chiffrees[moitie:])
-            
-            if entropie_moitie1 > 7.5 and entropie_moitie2 > 7.5:
-              score += 0.3
+            if entropie_moitie1 > 7.3 and entropie_moitie2 > 7.3:
+              score += 0.10
+        except Exception:
+          pass
               
     except FileNotFoundError:
       return 0.0    
     
+    # Clamp [0,1]
+    if score < 0.0:
+      score = 0.0
+    if score > 1.0:
+      score = 1.0
     return score
 
 

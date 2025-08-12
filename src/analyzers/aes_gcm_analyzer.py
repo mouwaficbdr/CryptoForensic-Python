@@ -82,10 +82,9 @@ class Aes_Gcm_Analyzer(CryptoAnalyzer):
     Identifie si le fichier utilise l'algorithme AES GCM.
     
     Cette méthode utilise plusieurs heuristiques spécifiques à AES GCM pour se différencier d'AES CBC :
-    - Structure : nonce (12 bytes) + données chiffrées + tag d'authentification (16 bytes)
-    - Pas de contrainte de taille (pas de padding)
-    - Tag d'authentification reconnaissable
-    - Mode authentifié moderne (plus sécurisé que CBC)
+    - Structure attendue: nonce (12 bytes) + données chiffrées + tag (16 bytes)
+    - Pas de padding (donc taille du corps non contrainte par 16)
+    - Poids fort donné aux vérifications structurelles, poids faible à l'entropie
     
     Args:
         chemin_fichier_chiffre(str): Le chemin vers le fichier chiffré.
@@ -96,55 +95,82 @@ class Aes_Gcm_Analyzer(CryptoAnalyzer):
     try:
         with open(chemin_fichier_chiffre, "rb") as f:
             contenu_fichier: bytes = f.read()
-        
-        # Heuristique 1: Vérifier que le fichier est assez grand pour contenir nonce + tag
-        # Nonce (12 bytes) + tag (16 bytes) = minimum 28 bytes
-        if len(contenu_fichier) < 28:
+
+        # Gate 1: taille minimale (nonce 12 + tag 16 + au moins 1 octet de corps)
+        if len(contenu_fichier) < 12 + 1 + 16:
             return 0.0
-        
-        # Heuristique 2: Extraire la structure potentielle
-        nonce_potentiel: bytes = contenu_fichier[0:12]  # 12 bytes pour le nonce
-        tag_potentiel: bytes = contenu_fichier[-16:]     # 16 bytes pour le tag d'authentification
-        donnees_chiffrees: bytes = contenu_fichier[12:-16]  # Le reste
-        
-        probabilite: float = 0.0
-        
-        # Heuristique 3: Vérifier la présence d'un tag d'authentification de 16 bytes
-        if len(tag_potentiel) == 16:
-            probabilite += 0.25
-        
-        # Heuristique 4: Analyser l'entropie des données chiffrées
+
+        # Placement attendu: [0:12]=nonce, [-16:]=tag, [12:-16]=corps
+        nonce: bytes = contenu_fichier[:12]
+        tag: bytes = contenu_fichier[-16:]
+        corps: bytes = contenu_fichier[12:-16]
+
+        # Gate 2: tailles strictes
+        if len(nonce) != 12 or len(tag) != 16 or len(corps) <= 0:
+            return 0.0
+
         from src.utils import calculer_entropie
-        entropie_donnees = calculer_entropie(donnees_chiffrees)
-        if entropie_donnees > 7.0:
-            probabilite += 0.25  # Augmenté de 0.2 à 0.25
-        
-        # Heuristique 5: Vérifier l'entropie du tag d'authentification
-        entropie_tag = calculer_entropie(tag_potentiel)
-        if entropie_tag > 7.5:
-            probabilite += 0.25  # Augmenté de 0.2 à 0.25
-        
-        # Heuristique 6: Différenciation clé d'AES CBC
-        # AES CBC nécessite une taille multiple de 16 bytes (padding PKCS7) contrairement à AES GCM
-        if len(donnees_chiffrees) % 16 != 0:
-            # Si la taille n'est pas multiple de 16, c'est probablement GCM (pas de padding)
-            probabilite += 0.21  # Légèrement augmenté pour dépasser 0.8
-        
-        # Heuristique 7: Vérifier l'entropie du nonce
-        entropie_nonce = calculer_entropie(nonce_potentiel)
-        if entropie_nonce > 7.0:
-            probabilite += 0.1
-        
-        # Si toutes les heuristiques de base sont satisfaites
-        if probabilite >= 0.5:
-            probabilite += 0.1
-        
-        # Normalisation du score dans [0.0, 1.0]
-        if probabilite > 1.0:
-            probabilite = 1.0
-        if probabilite < 0.0:
-            probabilite = 0.0
-        return probabilite
+        score: float = 0.0
+
+        # Structure GCM forte (poids majeur)
+        # Corps non multiple de 16 (pas de padding bloc)
+        if len(corps) % 16 != 0:
+            score += 0.35
+        else:
+            # Bloc-mode typique → forte pénalité
+            score -= 0.40
+
+        # Taille totale multiple de 16 → peu probable pour GCM (AES/Blowfish like)
+        if len(contenu_fichier) % 16 == 0:
+            score -= 0.35
+
+        # Négatifs forts supplémentaires: motifs modes à blocs
+        # - IV 16B plausible en tête + corps multiple de 16 (AES-CBC)
+        if len(contenu_fichier) >= 16:
+            iv16 = contenu_fichier[:16]
+            corps16 = contenu_fichier[16:]
+            try:
+                if len(corps16) > 0 and (len(corps16) % 16) == 0 and calculer_entropie(iv16) > 7.0:
+                    score -= 0.30
+            except Exception:
+                pass
+        # - IV 8B plausible en tête + corps multiple de 8 (Blowfish)
+        if len(contenu_fichier) >= 8:
+            iv8 = contenu_fichier[:8]
+            corps8 = contenu_fichier[8:]
+            if len(corps8) > 0 and (len(corps8) % 8) == 0:
+                score -= 0.25
+
+        # Si les 16 derniers octets ne ressemblent PAS à un tag AEAD (faible entropie), pénaliser
+        queue16 = contenu_fichier[-16:] if len(contenu_fichier) >= 16 else b""
+        try:
+            if queue16 and calculer_entropie(queue16) <= 7.0:
+                score -= 0.25
+        except Exception:
+            pass
+
+        # Entropie: signaux faibles (ne doivent pas rendre positif seuls)
+        if calculer_entropie(tag) > 7.2:
+            score += 0.10
+        if len(corps) > 0 and calculer_entropie(corps) > 7.0:
+            score += 0.10
+        # Nonce aléatoire plausible (faible poids)
+        try:
+            ent_nonce = calculer_entropie(nonce)
+            if ent_nonce > 7.0:
+                score += 0.08
+            else:
+                # Nonce peu aléatoire: contre-signal pour GCM
+                score -= 0.10
+        except Exception:
+            pass
+
+        # Clamp [0,1]
+        if score < 0.0:
+            score = 0.0
+        if score > 1.0:
+            score = 1.0
+        return score
         
     except FileNotFoundError:
         print(f"Erreur : Le fichier '{chemin_fichier_chiffre}' est introuvable.")
