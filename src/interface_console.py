@@ -231,3 +231,8 @@ class consoleInterface:
         self.console.clear()
         
 # consoleInterface()
+
+if __name__ == "__main__":
+    # Lancer l'interface console directement: python -m src.interface_console
+    install()
+    consoleInterface()

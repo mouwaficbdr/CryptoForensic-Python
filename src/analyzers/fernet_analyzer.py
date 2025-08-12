@@ -83,6 +83,11 @@ class FernetAnalyzer(CryptoAnalyzer):
         except (binascii.Error, ValueError):
             return 0.0
         
+        # Clamp [0,1]
+        if score < 0.0:
+            score = 0.0
+        if score > 1.0:
+            score = 1.0
         return score
 
     def __filtrer_dictionnaire_par_indices(self, chemin_dictionnaire: str) -> List[str]:

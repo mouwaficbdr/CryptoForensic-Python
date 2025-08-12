@@ -42,27 +42,46 @@ class Aes_Cbc_Analyzer(CryptoAnalyzer):
     try:
       with open(chemin_fichier_chiffre, "rb") as f:
         contenu_fichier = f.read()
-      
-        if len(contenu_fichier) < 16: #Heuristique IV probable en début de fichier (Vérifie si le fichier est assez grand pour contenir déjà l'IV)
+
+        if len(contenu_fichier) < 16:
           return 0.0
-  
-        initialization_vector = contenu_fichier[0:16]  # type: ignore
-        donnees_chiffres = contenu_fichier[16:]
-        
-        if len(donnees_chiffres) % 16 == 0: #Heuristique taille multipe de 16 bytes (Vérifie si les donnéese chiffrés sont en bloc de 16 octets, caractéristique de l'aes cbc)
-          probabilite = 0.5
+
+        iv = contenu_fichier[:16]
+        corps = contenu_fichier[16:]
+
+        score: float = 0.0
+
+        # CBC: taille des données chiffrées multiple de 16
+        if len(corps) % 16 == 0 and len(corps) > 0:
+          score += 0.55
         else:
-          probabilite = 0.0
-        
-        entropie = calculer_entropie(donnees_chiffres)
-        
-        if entropie > 7.5: #Heuristique entropie élevée (L'entropie doit être supérieur à 7.5 pour confirmer le chiffrement robuste caractéristique des algos de chiffrement)
-          probabilite += 0.5
-        
+          score -= 0.25
+
+        # Entropie globale des données
+        ent = calculer_entropie(corps)
+        if ent > 7.3:
+          score += 0.35
+
+        # Négatifs structure GCM: nonce 12B au début + tag 16B à la fin et corps non-multiple de 16
+        if len(contenu_fichier) >= 28:
+          from src.utils import calculer_entropie as entf
+          nonce12 = contenu_fichier[:12]
+          tag16 = contenu_fichier[-16:]
+          corps_gcm = contenu_fichier[12:-16]
+          if len(corps_gcm) > 0 and (
+            entf(nonce12) > 7.0 and entf(tag16) > 7.0 and len(corps_gcm) % 16 != 0
+          ):
+            score -= 0.60
+
+        # Clamp [0,1]
+        if score < 0.0:
+          score = 0.0
+        if score > 1.0:
+          score = 1.0
+        return score
+
     except FileNotFoundError:
       return 0.0
-      
-    return probabilite
   
   def __filtrer_dictionnaire_par_indices(self, chemin_dictionnaire: str) -> list[str]:
     '''
