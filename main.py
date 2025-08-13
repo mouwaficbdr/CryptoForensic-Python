@@ -3,6 +3,8 @@ import time
 from src.detecteur_crypto import DetecteurCryptoOrchestrateur, ResultatAnalyse
 from src.analyzers.blowfish_analyzer import Blowfish_Analyzer
 from src.analyzers.aes_cbc_analyzer import Aes_Cbc_Analyzer
+from src.analyzers.chacha20_analyzer import ChaCha20_Analyzer
+
 from src.interface_console import consoleInterface
 import os
 from rich.progress import track
@@ -18,4 +20,10 @@ from rich.progress import track
 
 consoleInterface()
 # print(DetecteurCryptoOrchestrateur().mission_complete_automatique('data/', 'keys/wordlist.txt'))
-
+# try:
+#         resultat_dechiffrement: bytes = ChaCha20_Analyzer().dechiffrer("data/mission2.enc", os.urandom(32))
+#         print(f"Résultat du déchiffrement : {resultat_dechiffrement}")
+# except ValueError as ve:
+#         print(ve)
+# except FileNotFoundError:
+#         print("Erreur: Le fichier 'mission2.enc' est introuvable.")
