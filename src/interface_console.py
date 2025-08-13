@@ -92,16 +92,18 @@ class consoleInterface:
             task=progress.add_task(f"Analyse du {fichier}", total=100)
             error = False 
             data = DetecteurCryptoOrchestrateur().analyser_fichier_specifique(fichier, progress, task, error, 1)
-            if data.algo :
-                print(f"\n[bold]Algorithme détecté[/bold] : [yellow]{data.algo}[/yellow]")
-                print(f"[bold]Score de probabilité[/bold] : [green]{data.score_probabilite}[/green]")
-                message = "[bold green] Analyse terminée. ✅[/bold green]" if not error else "[bold red] Mission terminée: Analyse non concluante. ❌ [/bold red]\n"
-                self.console.print(message)
-            else :
-                self.console.print("[bold yellow] Analyse terminée: Aucun algorithme détecté. ⚠️[/bold yellow]")
-            progress.remove_task(task)
-
-        print(f"[bold]Temps d'éxécution[/bold] : [green]{round(data.temps_execution,4)}[/green] s")
+            for item in data :
+                if item.algo :
+                    print(f"\n[bold]Algorithme potencielle détecté[/bold] : [yellow]{item.algo}[/yellow]")
+                    print(f"[bold]Score de probabilité[/bold] : [green]{item.score_probabilite}[/green]")
+                else :
+                    continue
+                
+            progress.update(task, description="Analyse terminé et affichage des résultats✅", advance=100)
+            time.sleep(2)   
+            
+        print(f"[bold]Temps d'éxécution[/bold] : [green]{round(data[0].temps_execution,4)}[/green] s\n")
+            
         esc=input("Veuillez appuyer sur la touche entrer pour retourner au menu principal")
         if esc=="":
             self.default_menu()
@@ -116,7 +118,7 @@ class consoleInterface:
         while pad < self.calc_center("data"):
             print(" ",end='')
             pad+=1
-
+            
         chemin_dossier = self.prompt.ask("")
         resultat = DetecteurCryptoOrchestrateur().mission_complete_automatique(chemin_dossier, "keys/wordlist.txt")
         print(line for line in resultat)
@@ -125,13 +127,15 @@ class consoleInterface:
         time.sleep(0.02)
         # self.console.clear()
         self.dynamiqueText("Mission terminée","green")
-
+        
         esc=input("Veuillez appuyer sur la touche entrer pour retourner au menu principal")
         time.sleep(0.02)
-
+        
         if esc=="":
             self.default_menu()
         else : self.default_menu()
+        
+        # self.default_menu()
 
     def menu_3(self):
         self.console.clear()
@@ -252,3 +256,7 @@ class consoleInterface:
             
 # consoleInterface()
 
+if __name__ == "__main__":
+    # Lancer l'interface console directement: python -m src.interface_console
+    install()
+    consoleInterface()
