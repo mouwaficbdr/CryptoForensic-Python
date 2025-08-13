@@ -46,7 +46,7 @@ class DetecteurCryptoOrchestrateur:
         Initialisation de tous les modules d'analyse disponibles 
         """
         self.analyzers: dict[str, CryptoAnalyzer] = {
-            "AES-256-CBC": Aes_Cbc_Analyzer(),
+            "AES-CBC-256": Aes_Cbc_Analyzer(),
             "CHACHA20": ChaCha20_Analyzer(),
             "BLOWFISH": Blowfish_Analyzer(),
             "AES-GCM": Aes_Gcm_Analyzer(),
