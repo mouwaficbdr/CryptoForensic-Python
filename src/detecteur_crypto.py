@@ -28,7 +28,7 @@ class ResultatAnalyse:
         self.texte_dechiffre = texte_dechiffre
         self.temps_execution = temps_execution
         self.nb_tentatives = nb_tentatives
-        self.fichier = fichier,
+        self.fichier = fichier
         self.taux_succes = taux_succes
 class DetecteurCryptoOrchestrateur:
     """
@@ -65,7 +65,7 @@ class DetecteurCryptoOrchestrateur:
         progress.update(task_id=task, description=message, advance=avance)
         time.sleep(sleep_apres)
         
-    def analyser_fichier_specifique(self, chemin_fichier_chiffre: str, progress : Progress, task, error:bool, nbr_opr_mission: int) -> List[ResultatAnalyse] :
+    def analyser_fichier_specifique(self, chemin_fichier_chiffre: str, progress : Progress, task, error:bool, nbr_opr_mission: int) -> ResultatAnalyse :
         """
         ANALYSE D'UN FICHIER SPÉCIFIQUE
         - Sélection du fichier à analyser
@@ -93,7 +93,7 @@ class DetecteurCryptoOrchestrateur:
                 self.maj_progress_bar(0.3, progress, task, "Fichier non trouvé ❌ (Aborting...)", ((avance * self._NBR_OPERATION_ANALYSE) - avance * 0.3), 1) 
                 
                 error = True
-                return [ResultatAnalyse("", b"", 0.0, b"", 0.0, 0)]
+                return ResultatAnalyse("", b"", 0.0, b"", 0.0, 0)
             
             # Initialisation des variables
             # TODO : Mise à jour de la progress bar -> step : Initialisation des utilitaires pour l'identification (Done)
@@ -124,12 +124,10 @@ class DetecteurCryptoOrchestrateur:
                 cumul_progress_avance += 2 * avance_algo
                 
                 if score >= 0.6 :  # Seuil de confiance
-                    
                     algorithme_potenciel.append({
                         'algo': nom_algo,
                         'score': score
                     })
-                    
                     # TODO : Mise à jour de la progress bar -> step : Détection réussie pour {algorithme} et préparation du rapport d'analyse (Done)
                     self.maj_progress_bar(1, progress, task, f"Elligibilité détectée pour {nom_algo}", avance_algo, 1)
                     
@@ -139,24 +137,27 @@ class DetecteurCryptoOrchestrateur:
 
                     cumul_progress_avance += avance_algo
  
+            # Sélection du meilleur algorithme au-dessus d'un seuil réaliste
             if not algorithme_potenciel:
                 print("Aucun algorithme correctement détecté ")
                 temps_execution = time.time() - debut_analyse
-                return [ResultatAnalyse("", b"", 0.0, b"", temps_execution, nb_tentatives, chemin_fichier_chiffre, 0)]
+                return ResultatAnalyse("", b"", 0.0, b"", temps_execution, nb_tentatives, chemin_fichier_chiffre, 0)
+            
+            meilleur = max(algorithme_potenciel, key=lambda x: x['score'])
+            seuil = 0.65
+            if meilleur['score'] < seuil:
+                print("Aucun score n'atteint le seuil minimal")
+                temps_execution = time.time() - debut_analyse
+                return ResultatAnalyse("", b"", 0.0, b"", temps_execution, nb_tentatives, chemin_fichier_chiffre, 0)
             
             temps_execution = time.time() - debut_analyse
-            
-            resultat : List[ResultatAnalyse]= []
-            for item in algorithme_potenciel:
-                resultat.append(ResultatAnalyse(item['algo'], cle, item['score'], texte_dechiffre, temps_execution, nb_tentatives, chemin_fichier_chiffre, 0))
-            
-            return resultat
+            return ResultatAnalyse(meilleur['algo'], cle, meilleur['score'], texte_dechiffre, temps_execution, nb_tentatives, chemin_fichier_chiffre, 0)
         
         except Exception as e:
             print(f"Erreur lors de l'analyse: {str(e)}")
             temps_execution = time.time() - debut_analyse
             error = True
-            return [ResultatAnalyse("", b"", 0.0, b"", temps_execution, 0, chemin_fichier_chiffre)]
+            return ResultatAnalyse("", b"", 0.0, b"", temps_execution, 0, chemin_fichier_chiffre)
     
     def __tenter_dechiffrement_avec_dictionnaire(self, chemin_fichier: str, cles_candidates: list[bytes], analyzer: CryptoAnalyzer, resultat: ResultatAnalyse):
         """
@@ -226,49 +227,44 @@ class DetecteurCryptoOrchestrateur:
                     
                     chemin_fichier = os.path.join(dossier_chiffres, fichier)
                     
-                    # Analyse du fichier
+                    # Analyse du fichier (retour unique)
                     error = False
-                    resultats_analyse = self.analyser_fichier_specifique(fichier, progress, task, error, self._NBR_OPERATION_MISSION)
-                    cumul_avance : float = 0
+                    resultat = self.analyser_fichier_specifique(fichier, progress, task, error, self._NBR_OPERATION_MISSION)
+                    resultat_final: ResultatAnalyse = ResultatAnalyse("", b"", 0.0, b"", 0.0, 0)
+                    cumul_avance: float = 0
 
-                    print('analyzed')
                     # Tentative de déchiffrement si algorithme détecté
-                    for resultat in resultats_analyse :
-                        if resultat.algo:
-                            avancement = (100/(self._NBR_OPERATION_MISSION * len(resultats_analyse)))
-                            # TODO: MAJ de la progress bar -> step: Amorçage de la phase de déchiffrement (Done)
-                            self.maj_progress_bar(0, progress, task, f"Amorçage de la phase de déchiffrement avec {resultat.algo}...", avancement * 0.5, 1)
-                                                    
-                            analyzer = self.analyzers[resultat.algo]
-                            
-                            # TODO: MAJ de la progress bar -> step: Récupération des clés candidates (Done)
-                            self.maj_progress_bar(0, progress, task, f"Récupération des clés candidates pour {resultat.algo}...", avancement*0.5, 1)
+                    if resultat.algo:
+                        avancement = (100/(self._NBR_OPERATION_MISSION))
+                        # TODO: MAJ de la progress bar -> step: Amorçage de la phase de déchiffrement (Done)
+                        self.maj_progress_bar(0, progress, task, f"Amorçage de la phase de déchiffrement avec {resultat.algo}...", avancement * 0.5, 1)
 
-                            cles_candidates = analyzer.generer_cles_candidates(chemin_dictionnaire)
-                            cumul_avance += avancement
-                            
-                            if cles_candidates:
-                                print(f"Test de {len(cles_candidates)} clés candidates pour {resultat.algo}...")
-                                
-                                # TODO: MAJ de la progress bar -> step: Test de déchiffrement (Done)
-                                self.maj_progress_bar(0, progress, task, f"Test de déchiffrement pour {resultat.algo}...", avancement * 0.5, 3)
-                            
-                                error = self.__tenter_dechiffrement_avec_dictionnaire(chemin_fichier, cles_candidates, analyzer, resultat) 
-                                
-                                #Cas de déchiffrement réussi
-                                if not error : 
-                                    # TODO: MAJ de la progress bar -> step: Déchiffrement réussi pour {algorithme}
-                                    self.maj_progress_bar(0.5, progress, task, f"Déchiffrement réussi pour {resultat.algo}", (100/self._NBR_OPERATION_MISSION) - cumul_avance , 2)
-                                    
-                                    resultat_final : ResultatAnalyse = resultat
-                                    break
-                                else : 
-                                    self.maj_progress_bar(0.5, progress, task, f"Echec de déchiffrement pour {resultat.algo} ❌", avancement * 0.5, 2)
-                            else :
-                                # TODO: MAJ de la progress bar -> step: Abort et récupération des résultats d'analyse (Done)
-                                self.maj_progress_bar(0, progress, task, "Aucune clé candidate générée pour {resultat.algo}❌ (Aborting ...)", avancement, 3)
-                                error = True
-                    
+                        analyzer = self.analyzers[resultat.algo]
+                        # TODO: MAJ de la progress bar -> step: Récupération des clés candidates (Done)
+                        self.maj_progress_bar(0, progress, task, f"Récupération des clés candidates pour {resultat.algo}...", avancement*0.5, 1)
+                        cles_candidates = analyzer.generer_cles_candidates(chemin_dictionnaire)
+                        cumul_avance += avancement
+
+                        if cles_candidates:
+                            print(f"Test de {len(cles_candidates)} clés candidates pour {resultat.algo}...")
+                            # TODO: MAJ de la progress bar -> step: Test de déchiffrement (Done)
+                            self.maj_progress_bar(0, progress, task, f"Test de déchiffrement pour {resultat.algo}...", avancement * 0.5, 3)
+
+                            error = self.__tenter_dechiffrement_avec_dictionnaire(chemin_fichier, cles_candidates, analyzer, resultat)
+                            if not error:
+                                # Déchiffrement réussi
+                                self.maj_progress_bar(0.5, progress, task, f"Déchiffrement réussi pour {resultat.algo}", (100/self._NBR_OPERATION_MISSION) - cumul_avance , 2)
+                                resultat_final = resultat
+                            else:
+                                self.maj_progress_bar(0.5, progress, task, f"Echec de déchiffrement pour {resultat.algo} ❌", avancement * 0.5, 2)
+                        else:
+                            # Aucune clé candidate
+                            self.maj_progress_bar(0, progress, task, f"Aucune clé candidate générée pour {resultat.algo} ❌ (Aborting ...)", avancement, 3)
+                            error = True
+                    else:
+                        # Aucun algo détecté
+                        error = True
+
                     resultats.append(resultat_final)
                     
                     # retour visuel
@@ -287,26 +283,19 @@ class DetecteurCryptoOrchestrateur:
                     
                     progress.remove_task(task)
                 
-                # Rapport de synthèse final
-                with Progress() as progress :
-                    task = progress.add_task("Préparation des rapports", total=100) # TODO: New progress bar -> step: Préparation des rapports (1 to 100%) (Done)
-                    
-                    while not progress.finished :
-                        progress.update(task, description="Préparation des rapports", advance=2)
-                        time.sleep(0.2)
-                    for i in range(len(fichiers_enc)) :
-                        resultat = {
-                            'algorithme': resultats[i].algo,
-                            'fichier': resultats[i].fichier,
-                            'cle': resultats[i].cle,
-                            'tentatives': resultats[i].nb_tentatives,
-                            'temps_execution': resultats[i].temps_execution,
-                            'taux_succes': resultats[i].taux_succes,
-                            'statut_succes' : 'Succès' if resultats[i].taux_succes > 60 else 'Echec',
-                            'texte_dechiffre' : resultats[i].texte_dechiffre
-                        }
-                        rapport_mission().generer_rapport_synthese(resultat)
-                        progress.update(task, description="Mission complète effectuée.") # TODO: MAJ de la progress bar -> step: Mission complète effectuée (Done)
+                # Rapport de synthèse final (sans Progress imbriqué pour éviter les conflits)
+                for i in range(len(fichiers_enc)):
+                    resultat = {
+                        'algorithme': resultats[i].algo,
+                        'fichier': resultats[i].fichier,
+                        'cle': resultats[i].cle,
+                        'tentatives': resultats[i].nb_tentatives,
+                        'temps_execution': resultats[i].temps_execution,
+                        'taux_succes': resultats[i].taux_succes,
+                        'statut_succes' : 'Succès' if resultats[i].taux_succes > 60 else 'Echec',
+                        'texte_dechiffre' : resultats[i].texte_dechiffre
+                    }
+                    rapport_mission().generer_rapport_synthese(resultat)
 
                 # Mise à jour des statistiques globales
                 self.missions_completees.append({
@@ -418,4 +407,3 @@ class DetecteurCryptoOrchestrateur:
         return "Aucune clé trouvé"
 
 
-print(DetecteurCryptoOrchestrateur().attaque_dictionnaire("mission1.enc","AES-CBC-256"))
