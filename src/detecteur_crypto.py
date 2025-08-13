@@ -248,7 +248,7 @@ class DetecteurCryptoOrchestrateur:
                             cumul_avance += avancement
                             
                             if cles_candidates:
-                                print(f"Test de {len(cles_candidates)} clés candidates...")
+                                print(f"Test de {len(cles_candidates)} clés candidates pour {resultat.algo}...")
                                 
                                 # TODO: MAJ de la progress bar -> step: Test de déchiffrement (Done)
                                 self.maj_progress_bar(0, progress, task, f"Test de déchiffrement pour {resultat.algo}...", avancement * 0.5, 3)
@@ -266,7 +266,7 @@ class DetecteurCryptoOrchestrateur:
                                     self.maj_progress_bar(0.5, progress, task, f"Echec de déchiffrement pour {resultat.algo} ❌", avancement * 0.5, 2)
                             else :
                                 # TODO: MAJ de la progress bar -> step: Abort et récupération des résultats d'analyse (Done)
-                                self.maj_progress_bar(0, progress, task, "Aucune clé candidate générée ❌ (Aborting ...)", avancement, 3)
+                                self.maj_progress_bar(0, progress, task, f"Aucune clé candidate générée pour {resultat.algo}❌ (Aborting ...)", avancement, 3)
                                 error = True
                     
                     resultats.append(resultat_final)
@@ -417,7 +417,4 @@ class DetecteurCryptoOrchestrateur:
         
         return "Aucune clé trouvé"
 
-            # print("\n Process is done ...")
 
-
-print(DetecteurCryptoOrchestrateur().attaque_dictionnaire("mission1.enc","AES-CBC-256"))
