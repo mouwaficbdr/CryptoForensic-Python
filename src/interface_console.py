@@ -148,7 +148,7 @@ class consoleInterface:
             pad+=1
         chemin_fichier = self.prompt.ask("")
 
-        algo = self.prompt.ask("Veuillez saisir l'un des algorithmes suivant pour le déchiffrage",choices=["AES-CBC-256","CHACHA20","BLOWFISH","AES-GCM","FERNET"]).upper()
+        algo = self.prompt.ask("Veuillez saisir l'un des algorithmes suivant pour le déchiffrage",choices=[ "AES-256-CBC","CHACHA20","BLOWFISH","AES-GCM","FERNET"]).upper()
 
         self.dynamiqueText("Attaque en cours...","green")
         # time.sleep(0.02)
