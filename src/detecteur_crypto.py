@@ -47,10 +47,10 @@ class DetecteurCryptoOrchestrateur:
         """
         self.analyzers: dict[str, CryptoAnalyzer] = {
             "AES-CBC-256": Aes_Cbc_Analyzer(),
-            "ChaCha20": ChaCha20_Analyzer(),
-            "Blowfish": Blowfish_Analyzer(),
+            "CHACHA20": ChaCha20_Analyzer(),
+            "BLOWFISH": Blowfish_Analyzer(),
             "AES-GCM": Aes_Gcm_Analyzer(),
-            "Fernet": FernetAnalyzer(),
+            "FERNET": FernetAnalyzer(),
         }
         self.missions_completees: list[dict[str, Union[str, list[ResultatAnalyse], float]]]  = []
         self.statistiques_globales: dict[str, Union[int, float]] = {
@@ -266,7 +266,7 @@ class DetecteurCryptoOrchestrateur:
                                     self.maj_progress_bar(0.5, progress, task, f"Echec de déchiffrement pour {resultat.algo} ❌", avancement * 0.5, 2)
                             else :
                                 # TODO: MAJ de la progress bar -> step: Abort et récupération des résultats d'analyse (Done)
-                                self.maj_progress_bar(0, progress, task, f"Aucune clé candidate générée pour {resultat.algo}❌ (Aborting ...)", avancement, 3)
+                                self.maj_progress_bar(0, progress, task, "Aucune clé candidate générée pour {resultat.algo}❌ (Aborting ...)", avancement, 3)
                                 error = True
                     
                     resultats.append(resultat_final)
@@ -418,3 +418,4 @@ class DetecteurCryptoOrchestrateur:
         return "Aucune clé trouvé"
 
 
+#print(DetecteurCryptoOrchestrateur().attaque_dictionnaire("mission1.enc","AES-CBC-256"))#
