@@ -92,16 +92,18 @@ class consoleInterface:
             task=progress.add_task(f"Analyse du {fichier}", total=100)
             error = False 
             data = DetecteurCryptoOrchestrateur().analyser_fichier_specifique(fichier, progress, task, error, 1)
-            if data.algo :
-                print(f"\n[bold]Algorithme détecté[/bold] : [yellow]{data.algo}[/yellow]")
-                print(f"[bold]Score de probabilité[/bold] : [green]{data.score_probabilite}[/green]")
-                message = "[bold green] Analyse terminée. ✅[/bold green]" if not error else "[bold red] Mission terminée: Analyse non concluante. ❌ [/bold red]\n"
-                self.console.print(message)
-            else :
-                self.console.print("[bold yellow] Analyse terminée: Aucun algorithme détecté. ⚠️[/bold yellow]")
-            progress.remove_task(task)
-
-        print(f"[bold]Temps d'éxécution[/bold] : [green]{round(data.temps_execution,4)}[/green] s")
+            for item in data :
+                if item.algo :
+                    print(f"\n[bold]Algorithme potencielle détecté[/bold] : [yellow]{item.algo}[/yellow]")
+                    print(f"[bold]Score de probabilité[/bold] : [green]{item.score_probabilite}[/green]")
+                else :
+                    continue
+                
+            progress.update(task, description="Analyse terminé et affichage des résultats✅", advance=100)
+            time.sleep(2)   
+            
+        print(f"[bold]Temps d'éxécution[/bold] : [green]{round(data[0].temps_execution,4)}[/green] s\n")
+            
         esc=input("Veuillez appuyer sur la touche entrer pour retourner au menu principal")
         if esc=="":
             self.default_menu()
@@ -146,7 +148,7 @@ class consoleInterface:
             pad+=1
         chemin_fichier = self.prompt.ask("")
 
-        algo = self.prompt.ask("Veuillez saisir l'un des algorithmes suivant pour le déchiffrage",choices=["AES-CBC-256","CHACHA20","BLOWFISH","AES-GCM","FERNET"]).upper()
+        algo = self.prompt.ask("Veuillez saisir l'un des algorithmes suivant pour le déchiffrage",choices=[ "AES-256-CBC","CHACHA20","BLOWFISH","AES-GCM","FERNET"]).upper()
 
         self.dynamiqueText("Attaque en cours...","green")
         # time.sleep(0.02)

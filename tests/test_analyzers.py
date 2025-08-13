@@ -4,6 +4,9 @@ import os
 import sys
 import hashlib
 from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
+from Crypto.Cipher import Blowfish
+from struct import pack
+
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.fernet import Fernet
 from pathlib import Path
@@ -11,6 +14,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from src.analyzers.aes_cbc_analyzer import Aes_Cbc_Analyzer
 from src.analyzers.chacha20_analyzer import ChaCha20_Analyzer
+from src.analyzers.blowfish_analyzer import Blowfish_Analyzer
 from src.analyzers.aes_gcm_analyzer import Aes_Gcm_Analyzer
 from src.analyzers.fernet_analyzer import FernetAnalyzer
 
@@ -116,6 +120,51 @@ class ChaCha20AnalyzerTester(TestCase):
         cle_valide = self.cle_test_chacha
         with self.assertRaises(FileNotFoundError):
             self.analyser_chacha.dechiffrer("chemin_invalide.enc", cle_valide)
+
+
+class BlowfishAnalyzerTester(TestCase):
+    
+    """
+        Cette classe contient les différents tests éffectués sur les méthodes en rapport avec l'analyzer Blowfish
+    """
+
+    def setUp(self):
+        # Initialisation de la classe Blowfish_Analyzer pour les tests des méthodes de cette dernière
+        self.analyzer = Blowfish_Analyzer()
+        # Fichier invalide pour les tests d'exceptions et de résultat d'erreur
+        self.fichier_crypte_invalide = "tests/fichiers_pour_tests/mission3_invalide.enc"
+        self.fichier_crypte_valide = "tests/fichiers_pour_tests/mission3_valide.enc"
+        self.fichier_dictionnaire = "./keys/wordlist.txt"
+        self.key = b'This is 2 blowfish algorithm key'
+        self.mot_a_trouver = b'zertyuiopqsdfghjklmwxcvbn,;&1234567890iubdo,cap!=)"_'
+
+    # def test_identifier_algo(self):
+    #     self.assertAlmostEqual(self.analyzer.identifier_algo(self.fichier_crypte_invalide), 0.0)
+    #     self.assertAlmostEqual(self.analyzer.identifier_algo(self.fichier_crypte_valide), 0.7)
+
+    def test_generer_cles_candidates(self):
+        # Dans ce cas, on a un dictionnaire qui contient des valeurs qui ne cadrent pas
+        # avec notre fichier de test, donc la génération renverra une liste vide 
+        self.assertNotEqual(self.analyzer.generer_cles_candidates(self.fichier_dictionnaire), [])
+
+    def test_dechiffrer_taille_cle_invalide(self):
+        # On tente de lever l'exception ValueError en renseignant une clé ne respectant
+        # l'intervalle pour la taille requise
+        invalide_key = b'\x00'
+        with self.assertRaises(ValueError):
+            self.analyzer.dechiffrer(self.fichier_crypte_valide, invalide_key)
+
+    def test_dechiffrer_fichier_introuvable(self):
+        # Vérification de l'exception FileNotFoundError
+        with self.assertRaises(FileNotFoundError):
+            self.analyzer.dechiffrer('dohi.txt', self.key)
+
+    def test_dechiffrer_fichier(self):
+        # Déchiffrement du fichier valide en utilisant la bonne clé
+        self.assertEqual(self.analyzer.dechiffrer(self.fichier_crypte_valide, self.key), self.mot_a_trouver)
+
+        # Cas où la valeur de sortie ne correspond à celle attendue
+        self.assertNotEqual(self.analyzer.dechiffrer(self.fichier_crypte_valide, self.key), b'Dohi 1 fois')
             
 class AesGcmTester(TestCase) :
     _wordlist = "keys/wordlist.txt"

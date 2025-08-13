@@ -1,3 +1,9 @@
+import sys
+import os
+from ..utils import calculer_entropie
+import hashlib
+from src.crypto_analyzer import CryptoAnalyzer
+from cryptography.hazmat.primitives.ciphers import algorithms, Cipher, modes
 from src.crypto_analyzer import CryptoAnalyzer
 from src.utils import calculer_entropie
 import hashlib
@@ -5,6 +11,7 @@ import base64
 import re
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.padding import PKCS7
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 class Blowfish_Analyzer(CryptoAnalyzer):
   '''Détermine si l'algo blowfish est utilisé, génère des clés et tente de de déchffrer un fichier chiffré en utilisant les clés générées.
   
@@ -95,6 +102,12 @@ class Blowfish_Analyzer(CryptoAnalyzer):
     """
     Filtre le dictionnaire en se basant sur les indices de la mission 3.
     L'indice pointe vers un format de clé "sha + nombre + chiffres simples".
+
+    Args:
+      chemin_dictionnaire (str): Chemin du dictionnaire sur lequel on effectue la recherche des potentielles mots clés
+
+    Return:
+      list[str]: La liste de tous les mots en chaine de caractères, susceptibles d'être des mots clés parmi ceux du dictionnaire fourni. 
     """
     mots_filtres: list[str] = []
     prefixes = ("sha256", "sha384", "sha512", "sha1")

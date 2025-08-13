@@ -1,4 +1,4 @@
-import math, re, string, time
+import math, re, string, time, os
 from pathlib import Path
 from typing import Any, Dict, List, TypedDict
 from rich.console import Console
@@ -53,7 +53,6 @@ def verifier_texte_dechiffre(texte: str) -> Dict[str, Any]:
     """
 
     #Statistiques sur le texte 
-    
     stats: dict[str, Any] = {
         'imprimable':0,
         'nombre_mots':0,
@@ -70,8 +69,8 @@ def verifier_texte_dechiffre(texte: str) -> Dict[str, Any]:
     stats['imprimable'] = int(sum(1 for char in texte if char.isprintable()) / len(texte) * 100)
 
     # Traitement du texte brut pour obtenir une séquence distincte de pseudo-mot à cette étape séparé par des espaces
-    
-    tab='./:!\\}{_%*$£&#;,~"()[]=§|`^@?'
+
+    tab='.\\/:!}{_%*$£&#;,~"()[]=§|`^@?'
     copy=texte
     for lettre in tab:
         copy=copy.replace(lettre, ' ')
@@ -79,7 +78,6 @@ def verifier_texte_dechiffre(texte: str) -> Dict[str, Any]:
     # Diviser par espaces et filtrer les mots vides
     mots = [mot.strip() for mot in copy.split(' ') if mot.strip()]
     stats['nombre_mots']=len(mots)
-    
     # Verifier que le chaque mot du texte est un mot anglais/francais 
     
     try:
@@ -88,11 +86,12 @@ def verifier_texte_dechiffre(texte: str) -> Dict[str, Any]:
             trouve=False
             if not mot: continue
             
-            first_char = mot[0].lower()
-            
+            first_char = mot[0].lower() 
+                        
             for syl in ['Fr', 'En']:
 
-                chemin = Path(f"dico{syl}")/f"{first_char}.txt"
+                chemin = Path(f"dico{syl}")/f"{first_char}.txt" 
+                if not os.path.isfile(chemin) : continue
                 try:
                     with open(chemin, 'r', encoding='latin-1') as f: 
                         for ligne in f:
